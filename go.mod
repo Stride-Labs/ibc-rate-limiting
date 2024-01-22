@@ -1,4 +1,4 @@
-module github.com/Stride-Labs/stride/v17
+module github.com/Stride-Labs/ratelimit/v1
 
 go 1.21
 
