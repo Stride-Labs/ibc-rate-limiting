@@ -1,7 +1,7 @@
 syntax = "proto3";
 package stride.ratelimit;
 
-option go_package = "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types";
+option go_package = "github.com/Stride-Labs/ratelimit/types";
 
 // Params defines the ratelimit module's parameters.
 message Params {}

@@ -14,7 +14,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/ratelimit/v1/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
 	"github.com/Stride-Labs/stride/v17/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v17/x/icacallbacks/types"
 )

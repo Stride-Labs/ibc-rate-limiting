@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/ratelimit/v1/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
 )
 

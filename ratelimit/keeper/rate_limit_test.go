@@ -7,8 +7,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/ratelimit/v1/keeper"
-	"github.com/Stride-Labs/ratelimit/v1/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/keeper"
+	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
 	minttypes "github.com/Stride-Labs/stride/v17/x/mint/types"
 )
 

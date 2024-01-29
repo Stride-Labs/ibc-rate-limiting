@@ -1,4 +1,4 @@
-module github.com/Stride-Labs/ratelimit/v1
+module github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit
 
 go 1.21
 

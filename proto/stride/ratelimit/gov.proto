@@ -3,7 +3,7 @@ package stride.ratelimit;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types";
+option go_package = "github.com/Stride-Labs/ratelimit/types";
 
 message AddRateLimitProposal {
   option (gogoproto.equal) = true;
