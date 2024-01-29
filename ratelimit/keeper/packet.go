@@ -15,8 +15,6 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
-	"github.com/Stride-Labs/stride/v17/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v17/x/icacallbacks/types"
 )
 
 type RateLimitedPacketInfo struct {
@@ -25,6 +23,33 @@ type RateLimitedPacketInfo struct {
 	Amount    sdkmath.Int
 	Sender    string
 	Receiver  string
+}
+
+// CheckAcknowledementSucceeded unmarshals IBC Acknowledgements, and determines
+// whether the tx was successful
+func (k Keeper) CheckAcknowledementSucceeded(ctx sdk.Context, ack []byte) (success bool, err error) {
+	// Unmarshal the raw ack response
+	var acknowledgement channeltypes.Acknowledgement
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(ack, &acknowledgement); err != nil {
+		return false, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %s", err.Error())
+	}
+
+	// The ack can come back as either AcknowledgementResult or AcknowledgementError
+	// If it comes back as AcknowledgementResult, the messages are encoded differently depending on the SDK version
+	switch response := acknowledgement.Response.(type) {
+	case *channeltypes.Acknowledgement_Result:
+		if len(response.Result) == 0 {
+			return false, errorsmod.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
+		}
+		return true, nil
+
+	case *channeltypes.Acknowledgement_Error:
+		k.Logger(ctx).Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
+		return false, nil
+
+	default:
+		return false, errorsmod.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
+	}
 }
 
 // Parse the denom from the Send Packet that will be used by the rate limit module
@@ -195,8 +220,7 @@ func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Pa
 // If the packet failed, we should decrement the Outflow
 func (k Keeper) AcknowledgeRateLimitedPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte) error {
 	// Check whether the ack was a success or error
-	isICA := false
-	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, k.Logger(ctx), acknowledgement, isICA)
+	ackSuccess, err := k.CheckAcknowledementSucceeded(ctx, acknowledgement)
 	if err != nil {
 		return err
 	}
@@ -208,7 +232,7 @@ func (k Keeper) AcknowledgeRateLimitedPacket(ctx sdk.Context, packet channeltype
 	}
 
 	// If the ack was successful, remove the pending packet
-	if ackResponse.Status == icacallbacktypes.AckResponseStatus_SUCCESS {
+	if ackSuccess {
 		k.RemovePendingSendPacket(ctx, packetInfo.ChannelID, packet.Sequence)
 		return nil
 	}
