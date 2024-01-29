@@ -5,7 +5,7 @@ import "ratelimit/v1/ratelimit.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types";
+option go_package = "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types";
 
 // Query defines the gRPC querier service.
 service Query {

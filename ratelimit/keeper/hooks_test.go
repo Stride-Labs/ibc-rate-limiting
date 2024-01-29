@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	epochstypes "github.com/Stride-Labs/stride/v17/x/epochs/types"
 )
 

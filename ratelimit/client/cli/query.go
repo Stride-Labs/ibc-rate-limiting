@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
 
 const (

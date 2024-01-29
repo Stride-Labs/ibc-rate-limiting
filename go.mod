@@ -1,4 +1,4 @@
-module github.com/Stride-Labs/ibc-rate-limiting/v1
+module github.com/Stride-Labs/ibc-rate-limiting
 
 go 1.21
 

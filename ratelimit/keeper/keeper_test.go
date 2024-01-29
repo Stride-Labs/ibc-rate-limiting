@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
 )
 

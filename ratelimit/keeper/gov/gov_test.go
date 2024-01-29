@@ -12,8 +12,8 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/keeper/gov"
-	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper/gov"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
 	minttypes "github.com/Stride-Labs/stride/v17/x/mint/types"
 )

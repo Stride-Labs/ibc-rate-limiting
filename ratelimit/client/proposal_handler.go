@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/client/cli"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/client/cli"
 
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 )

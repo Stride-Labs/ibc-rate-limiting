@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/client"
-	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/keeper"
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/client"
+	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"

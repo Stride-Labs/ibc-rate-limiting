@@ -8,8 +8,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit"
-	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
 	"github.com/Stride-Labs/stride/v17/testutil/nullify"
 )
