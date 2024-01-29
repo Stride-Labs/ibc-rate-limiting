@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/client"
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
 
@@ -144,6 +145,10 @@ var (
 				upgradeclient.LegacyCancelProposalHandler,
 				ibcclientclient.UpdateClientProposalHandler,
 				ibcclientclient.UpgradeProposalHandler,
+				ratelimitclient.AddRateLimitProposalHandler,
+				ratelimitclient.UpdateRateLimitProposalHandler,
+				ratelimitclient.RemoveRateLimitProposalHandler,
+				ratelimitclient.ResetRateLimitProposalHandler,
 			},
 		),
 		groupmodule.AppModuleBasic{},
