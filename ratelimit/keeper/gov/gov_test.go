@@ -15,7 +15,7 @@ import (
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper/gov"
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	"github.com/Stride-Labs/ibc-rate-limiting/testing/simapp/apptesting"
-	minttypes "github.com/Stride-Labs/stride/v17/x/mint/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 )
 
 type KeeperTestSuite struct {

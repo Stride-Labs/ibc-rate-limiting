@@ -9,7 +9,7 @@ import (
 
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
-	minttypes "github.com/Stride-Labs/stride/v17/x/mint/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 )
 
 const (
