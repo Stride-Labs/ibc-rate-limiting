@@ -1,10 +1,4 @@
----
-title: "RateLimit"
-excerpt: ""
-category: 6392913957c533007128548e
----
-
-# RateLimit Module
+# IBC Rate Limiting
 
 ## Overview
 
@@ -18,7 +12,7 @@ The _net_ inflow and outflow is used (rather than the total inflow/outflow) to p
 
 The module is implemented as IBC Middleware around the transfer module. The epoch's module is leveraged to determine when each rate limit window has expired (each window is denominated in hours). This means all rate limit windows with the same window duration will start and end at the same time.
 
-## Integrations
+## Integration
 To add the rate limit module, wire it up in `app.go` in line with the following example. The module must be included in a middleware stack alongside the transfer module.
 
 ```go
@@ -27,8 +21,8 @@ To add the rate limit module, wire it up in `app.go` in line with the following 
 // Import the rate limit module
 import (
   "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit"
-	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/keeper"
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
+  ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/keeper"
+  ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
 )
 
 ...
