@@ -4,18 +4,14 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	epochstypes "github.com/Stride-Labs/stride/v17/x/epochs/types"
 )
 
 // Before each hour epoch, check if any of the rate limits have expired,
 // and reset them if they have
-func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
-		epochHour := uint64(epochInfo.CurrentEpoch)
-
+func (k Keeper) BeginBlocker(ctx sdk.Context) {
+	if epochStarting, epochNumber := k.CheckHourEpochStarting(ctx); epochStarting {
 		for _, rateLimit := range k.GetAllRateLimits(ctx) {
-			if rateLimit.Quota.DurationHours != 0 && epochHour%rateLimit.Quota.DurationHours == 0 {
+			if rateLimit.Quota.DurationHours != 0 && epochNumber%rateLimit.Quota.DurationHours == 0 {
 				err := k.ResetRateLimit(ctx, rateLimit.Path.Denom, rateLimit.Path.ChannelId)
 				if err != nil {
 					k.Logger(ctx).Error(fmt.Sprintf("Unable to reset quota for Denom: %s, ChannelId: %s", rateLimit.Path.Denom, rateLimit.Path.ChannelId))
@@ -25,22 +21,23 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	}
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}
+// Checks if it's time to start the new hour epoch
+func (k Keeper) CheckHourEpochStarting(ctx sdk.Context) (epochStarting bool, epochNumber uint64) {
+	hourEpoch := k.GetHourEpoch(ctx)
 
-type Hooks struct {
-	k Keeper
-}
+	// If the block time is later than the current epoch start time + epoch duration,
+	// move onto the next epoch by incrementing the epoch number, height, and start time
+	currentEpochEndTime := hourEpoch.EpochStartTime.Add(hourEpoch.Duration)
+	shouldNextEpochStart := ctx.BlockTime().After(currentEpochEndTime)
+	if shouldNextEpochStart {
+		hourEpoch.EpochNumber++
+		hourEpoch.EpochStartTime = currentEpochEndTime
+		hourEpoch.EpochStartHeight = ctx.BlockHeight()
 
-var _ epochstypes.EpochHooks = Hooks{}
+		k.SetHourEpoch(ctx, hourEpoch)
+		return true, hourEpoch.EpochNumber
+	}
 
-func (k Keeper) Hooks() Hooks {
-	return Hooks{k}
-}
-
-func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	h.k.BeforeEpochStart(ctx, epochInfo)
-}
-
-func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	h.k.AfterEpochEnd(ctx, epochInfo)
+	// Otherwise, indicate that a new epoch is not starting
+	return false, 0
 }
