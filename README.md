@@ -18,6 +18,100 @@ The _net_ inflow and outflow is used (rather than the total inflow/outflow) to p
 
 The module is implemented as IBC Middleware around the transfer module. The epoch's module is leveraged to determine when each rate limit window has expired (each window is denominated in hours). This means all rate limit windows with the same window duration will start and end at the same time.
 
+## Integrations
+To add the rate limit module, wire it up in `app.go` in line with the following example. The module must be included in a middleware stack alongside the transfer module.
+
+```go
+// app.go
+
+// Import the rate limit module
+import (
+  "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit"
+	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/keeper"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/v1/ratelimit/types"
+)
+
+...
+
+// Register the AppModule
+ModuleBasics = module.NewBasicManager(
+    ...
+    ratelimit.AppModuleBasic{},
+    ...
+)
+
+...
+
+// Add the RatelimitKeeper to the App
+type App struct {
+  ...
+  RatelimitKeeper ratelimitkeeper.Keeper
+  ...
+}
+
+// Add the store key
+keys := sdk.NewKVStoreKeys(
+  ...
+  ratelimittypes.StoreKey,
+  ...
+)
+
+// Create the rate limit keeper
+app.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
+  appCodec,
+  keys[ratelimittypes.StoreKey],
+  app.GetSubspace(ratelimittypes.ModuleName),
+  app.BankKeeper,
+  app.IBCKeeper.ChannelKeeper,
+  app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+)
+
+// Add the rate limit module to a middleware stack with the transfer module
+//
+// Note: If the integrating chain already has middleware wired, you'll just 
+// have to add the rate limit module to the existing stack
+//
+// The following will create the following stack 
+// - Core IBC
+// - ratelimit
+// - transfer
+// - base app
+var transferStack ibcporttypes.IBCModule = transfer.NewIBCModule(app.TransferKeeper)
+transferStack = ratelimit.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
+
+// Add IBC Router
+ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
+
+// Add the rate limit module to the module manager
+app.mm = module.NewManager(
+  ...
+  ratelimit.NewAppModule(appCodec, app.RatelimitKeeper),
+)
+
+// Add the rate limit module to begin and end blockers, and init genesis
+app.mm.SetOrderBeginBlockers(
+  ...
+  ratelimittypes.ModuleName,
+)
+
+app.mm.SetOrderEndBlockers(
+  ...
+  ratelimittypes.ModuleName,
+)
+
+genesisModuleOrder := []string{
+  ...
+  ratelimittypes.ModuleName,
+}
+
+// Add the rate limit module to the params keeper
+func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
+  ...
+  paramsKeeper.Subspace(ratelimittypes.ModuleName)
+  ...
+}
+```
+
 ## Implementation
 
 Each rate limit is defined by the following three components:
