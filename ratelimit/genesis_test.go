@@ -10,8 +10,7 @@ import (
 
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit"
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
-	"github.com/Stride-Labs/stride/v17/app/apptesting"
-	"github.com/Stride-Labs/stride/v17/testutil/nullify"
+	"github.com/Stride-Labs/ibc-rate-limiting/testing/simapp/apptesting"
 )
 
 func createRateLimits() []types.RateLimit {
@@ -33,15 +32,16 @@ func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		Params:     types.Params{},
 		RateLimits: createRateLimits(),
+		WhitelistedAddressPairs: []types.WhitelistedAddressPair{
+			{Sender: "sender", Receiver: "receiver"},
+		},
+		BlacklistedDenoms:                []string{"denomA", "denomB"},
+		PendingSendPacketSequenceNumbers: []string{"channel-0/1", "channel-2/3"},
 	}
 
 	s := apptesting.SetupSuitelessTestHelper()
 	ratelimit.InitGenesis(s.Ctx, s.App.RatelimitKeeper, genesisState)
 	got := ratelimit.ExportGenesis(s.Ctx, s.App.RatelimitKeeper)
-	require.NotNil(t, got)
-
-	nullify.Fill(&genesisState)
-	nullify.Fill(got)
 
 	require.Equal(t, genesisState.RateLimits, got.RateLimits)
 }

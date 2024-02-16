@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
-	"github.com/Stride-Labs/stride/v17/app/apptesting"
+	"github.com/Stride-Labs/ibc-rate-limiting/testing/simapp/apptesting"
 )
 
 func TestGovRemoveRateLimit(t *testing.T) {
