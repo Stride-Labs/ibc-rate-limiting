@@ -90,7 +90,6 @@ func GenesisStateWithValSet(app *SimApp) GenesisState {
 	validator := tmtypes.NewValidator(pubKey, 1)
 	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
 
-	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	senderPrivKey.PubKey().Address()
 	acc := authtypes.NewBaseAccountWithAddress(senderPrivKey.PubKey().Address().Bytes())
@@ -99,7 +98,6 @@ func GenesisStateWithValSet(app *SimApp) GenesisState {
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000000000))),
 	}
 
-	//////////////////////
 	balances := []banktypes.Balance{balance}
 	genesisState := NewDefaultGenesisState()
 	genAccs := []authtypes.GenesisAccount{acc}
