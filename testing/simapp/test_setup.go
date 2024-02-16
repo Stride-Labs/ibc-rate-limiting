@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	cometbftdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -15,13 +16,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
-
-	cmdcfg "github.com/Stride-Labs/stride/v18/cmd/strided/config"
-	testutil "github.com/Stride-Labs/stride/v18/testutil"
 )
 
 const Bech32Prefix = "stride"
@@ -36,11 +35,26 @@ func SetupConfig() {
 	valoperpub := sdk.PrefixValidator + sdk.PrefixOperator + sdk.PrefixPublic
 	config.SetBech32PrefixForAccount(Bech32Prefix, Bech32Prefix+sdk.PrefixPublic)
 	config.SetBech32PrefixForValidator(Bech32Prefix+valoper, Bech32Prefix+valoperpub)
-	cmdcfg.SetAddressPrefixes(config)
+	config.SetAddressVerifier(func(bytes []byte) error {
+		if len(bytes) == 0 {
+			return errorsmod.Wrap(sdkerrors.ErrUnknownAddress, "addresses cannot be empty")
+		}
+
+		if len(bytes) > address.MaxAddrLen {
+			return errorsmod.Wrapf(sdkerrors.ErrUnknownAddress, "address max length is %d, got %d", address.MaxAddrLen, len(bytes))
+		}
+
+		// TODO: Do we want to allow addresses of lengths other than 20 and 32 bytes?
+		if len(bytes) != 20 && len(bytes) != 32 {
+			return errorsmod.Wrapf(sdkerrors.ErrUnknownAddress, "address length must be 20 or 32 bytes, got %d", len(bytes))
+		}
+
+		return nil
+	})
 }
 
 // Initializes a new SimApp for testing
-func InitTestingApp(initChain bool) *SimApp {
+func InitTestingApp() *SimApp {
 	db := cometbftdb.NewMemDB()
 	app := NewSimApp(
 		log.NewNopLogger(),
@@ -96,7 +110,6 @@ func GenesisStateWithValSet(app *SimApp) GenesisState {
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
 
 	bondAmt := sdk.DefaultPowerReduction
-	initValPowers := []abci.ValidatorUpdate{}
 
 	for _, val := range valSet.Validators {
 		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
@@ -116,13 +129,6 @@ func GenesisStateWithValSet(app *SimApp) GenesisState {
 		}
 		validators = append(validators, validator)
 		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
-
-		// add initial validator powers so consumer InitGenesis runs correctly
-		pub, _ := val.ToProto()
-		initValPowers = append(initValPowers, abci.ValidatorUpdate{
-			Power:  val.VotingPower,
-			PubKey: pub.PubKey,
-		})
 	}
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
@@ -154,17 +160,6 @@ func GenesisStateWithValSet(app *SimApp) GenesisState {
 		[]banktypes.SendEnabled{},
 	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
-
-	vals, err := tmtypes.PB2TM.ValidatorUpdates(initValPowers)
-	if err != nil {
-		panic("failed to get vals")
-	}
-
-	consumerGenesisState := testutil.CreateMinimalConsumerTestGenesis()
-	consumerGenesisState.InitialValSet = initValPowers
-	consumerGenesisState.ProviderConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
-	consumerGenesisState.Params.Enabled = true
-	genesisState[consumertypes.ModuleName] = app.AppCodec().MustMarshalJSON(consumerGenesisState)
 
 	return genesisState
 }

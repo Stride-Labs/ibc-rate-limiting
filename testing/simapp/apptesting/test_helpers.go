@@ -7,26 +7,24 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	"github.com/stretchr/testify/suite"
 
 	app "github.com/Stride-Labs/ibc-rate-limiting/testing/simapp"
 )
 
 var (
-	TestChainId   = "chain-0"
-	FirstClientId = "07-tendermint-0"
+	TestChainId = "chain-0"
 )
 
 type SuitelessAppTestHelper struct {
-	App *simapp.SimApp
+	App *app.SimApp
 	Ctx sdk.Context
 }
 
 type AppTestHelper struct {
 	suite.Suite
 
-	App         *simapp.SimApp
+	App         *app.SimApp
 	QueryHelper *baseapp.QueryServiceTestHelper
 	TestAccs    []sdk.AccAddress
 	Ctx         sdk.Context
