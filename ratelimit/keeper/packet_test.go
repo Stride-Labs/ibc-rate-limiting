@@ -13,8 +13,8 @@ import (
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 
-	"github.com/Stride-Labs/stride/v17/x/ratelimit/keeper"
-	"github.com/Stride-Labs/stride/v17/x/ratelimit/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
 
 const (
