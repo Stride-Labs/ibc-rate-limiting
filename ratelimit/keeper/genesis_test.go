@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"strconv"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -24,18 +25,108 @@ func createRateLimits() []types.RateLimit {
 }
 
 func (s *KeeperTestSuite) TestGenesis() {
-	genesisState := types.GenesisState{
-		Params:     types.Params{},
-		RateLimits: createRateLimits(),
-		WhitelistedAddressPairs: []types.WhitelistedAddressPair{
-			{Sender: "sender", Receiver: "receiver"},
+	currentHour := 13
+	blockTime := time.Date(2024, 1, 1, currentHour, 55, 8, 0, time.UTC)            // 13:55:08
+	defaultEpochStartTime := time.Date(2024, 1, 1, currentHour, 0, 0, 0, time.UTC) // 13:00:00 (truncated to hour)
+	blockHeight := int64(10)
+
+	testCases := []struct {
+		name          string
+		genesisState  types.GenesisState
+		firstEpoch    bool
+		expectedError string
+	}{
+		{
+			name:         "valid default state",
+			genesisState: *types.DefaultGenesis(),
+			firstEpoch:   true,
 		},
-		BlacklistedDenoms:                []string{"denomA", "denomB"},
-		PendingSendPacketSequenceNumbers: []string{"channel-0/1", "channel-2/3"},
+		{
+			name: "valid custom state",
+			genesisState: types.GenesisState{
+				RateLimits: createRateLimits(),
+				WhitelistedAddressPairs: []types.WhitelistedAddressPair{
+					{Sender: "senderA", Receiver: "receiverA"},
+					{Sender: "senderB", Receiver: "receiverB"},
+				},
+				BlacklistedDenoms:                []string{"denomA", "denomB"},
+				PendingSendPacketSequenceNumbers: []string{"channel-0/1", "channel-2/3"},
+				HourEpoch: types.HourEpoch{
+					EpochNumber:      1,
+					EpochStartTime:   blockTime,
+					Duration:         time.Minute,
+					EpochStartHeight: 1,
+				},
+			},
+			firstEpoch: false,
+		},
+		{
+			name: "invalid packet sequence - wrong delimiter",
+			genesisState: types.GenesisState{
+				RateLimits:                       createRateLimits(),
+				PendingSendPacketSequenceNumbers: []string{"channel-0/1", "channel-2|3"},
+			},
+			expectedError: "Invalid pending send packet, must be of form: {channelId}/{sequenceNumber}",
+		},
+		{
+			name: "invalid hour epoch - no duration",
+			genesisState: types.GenesisState{
+				RateLimits: createRateLimits(),
+				HourEpoch:  types.HourEpoch{},
+			},
+			expectedError: "Hour epoch duration must be specified",
+		},
+		{
+			name: "invalid hour epoch - no epoch time",
+			genesisState: types.GenesisState{
+				RateLimits: createRateLimits(),
+				HourEpoch: types.HourEpoch{
+					EpochNumber:      1,
+					EpochStartHeight: 1,
+					Duration:         time.Minute,
+				},
+			},
+			expectedError: "If hour epoch number is non-empty, epoch time must be initialized",
+		},
+		{
+			name: "invalid hour epoch - no epoch height",
+			genesisState: types.GenesisState{
+				RateLimits: createRateLimits(),
+				HourEpoch: types.HourEpoch{
+					EpochNumber:    1,
+					EpochStartTime: blockTime,
+					Duration:       time.Minute,
+				},
+			},
+			expectedError: "If hour epoch number is non-empty, epoch height must be initialized",
+		},
 	}
 
-	s.App.RatelimitKeeper.InitGenesis(s.Ctx, genesisState)
-	got := s.App.RatelimitKeeper.ExportGenesis(s.Ctx)
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.Ctx = s.Ctx.WithBlockTime(blockTime)
+			s.Ctx = s.Ctx.WithBlockHeight(blockHeight)
 
-	s.Require().Equal(genesisState.RateLimits, got.RateLimits)
+			// Call initGenesis with a panic wrapper for the error cases
+			defer func() {
+				if recoveryError := recover(); recoveryError != nil {
+					s.Require().Equal(tc.expectedError, recoveryError, "expected error from panic")
+				}
+			}()
+			s.App.RatelimitKeeper.InitGenesis(s.Ctx, tc.genesisState)
+
+			// If the hour epoch was not uninitialized in the raw genState,
+			// it will be initialized during InitGenesis
+			expectedGenesis := tc.genesisState
+			if tc.firstEpoch {
+				expectedGenesis.HourEpoch.EpochNumber = uint64(currentHour)
+				expectedGenesis.HourEpoch.EpochStartTime = defaultEpochStartTime
+				expectedGenesis.HourEpoch.EpochStartHeight = blockHeight
+			}
+
+			// Check that the exported state matches the imported state
+			exportedState := s.App.RatelimitKeeper.ExportGenesis(s.Ctx)
+			s.Require().Equal(expectedGenesis, *exportedState, "exported genesis state")
+		})
+	}
 }
