@@ -1,16 +1,11 @@
-package ratelimit_test
+package keeper_test
 
 import (
 	"strconv"
-	"testing"
-
-	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit"
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
-	"github.com/Stride-Labs/ibc-rate-limiting/testing/simapp/apptesting"
 )
 
 func createRateLimits() []types.RateLimit {
@@ -28,7 +23,7 @@ func createRateLimits() []types.RateLimit {
 	return rateLimits
 }
 
-func TestGenesis(t *testing.T) {
+func (s *KeeperTestSuite) TestGenesis() {
 	genesisState := types.GenesisState{
 		Params:     types.Params{},
 		RateLimits: createRateLimits(),
@@ -39,9 +34,8 @@ func TestGenesis(t *testing.T) {
 		PendingSendPacketSequenceNumbers: []string{"channel-0/1", "channel-2/3"},
 	}
 
-	s := apptesting.SetupSuitelessTestHelper()
-	ratelimit.InitGenesis(s.Ctx, s.App.RatelimitKeeper, genesisState)
-	got := ratelimit.ExportGenesis(s.Ctx, s.App.RatelimitKeeper)
+	s.App.RatelimitKeeper.InitGenesis(s.Ctx, genesisState)
+	got := s.App.RatelimitKeeper.ExportGenesis(s.Ctx)
 
-	require.Equal(t, genesisState.RateLimits, got.RateLimits)
+	s.Require().Equal(genesisState.RateLimits, got.RateLimits)
 }
