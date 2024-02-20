@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -249,20 +248,6 @@ func (s *KeeperTestSuite) TestAddressWhitelist() {
 		s.Require().False(found, "address pair should no longer be whitelisted (%s/%s)",
 			addressPair.Sender, addressPair.Receiver)
 	}
-}
-
-// Tests Get/Set Hour epoch
-func (s *KeeperTestSuite) TestHourEpoch() {
-	expectedHourEpoch := types.HourEpoch{
-		Duration:         time.Hour,
-		EpochNumber:      1,
-		EpochStartTime:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		EpochStartHeight: 10,
-	}
-	s.App.RatelimitKeeper.SetHourEpoch(s.Ctx, expectedHourEpoch)
-
-	actualHourEpoch := s.App.RatelimitKeeper.GetHourEpoch(s.Ctx)
-	s.Require().Equal(expectedHourEpoch, actualHourEpoch, "hour epoch")
 }
 
 // Adds a rate limit object to the store in preparation for the check rate limit tests

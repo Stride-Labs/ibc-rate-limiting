@@ -330,23 +330,3 @@ func (k Keeper) GetAllWhitelistedAddressPairs(ctx sdk.Context) []types.Whitelist
 
 	return allWhitelistedAddresses
 }
-
-// Stores the hour epoch
-func (k Keeper) SetHourEpoch(ctx sdk.Context, epoch types.HourEpoch) {
-	store := ctx.KVStore(k.storeKey)
-	epochBz := k.cdc.MustMarshal(&epoch)
-	store.Set(types.HourEpochKey, epochBz)
-}
-
-// Reads the hour epoch from the store
-func (k Keeper) GetHourEpoch(ctx sdk.Context) (epoch types.HourEpoch) {
-	store := ctx.KVStore(k.storeKey)
-
-	epochBz := store.Get(types.HourEpochKey)
-	if len(epochBz) == 0 {
-		panic("Hour epoch not found")
-	}
-
-	k.cdc.MustUnmarshal(epochBz, &epoch)
-	return epoch
-}
