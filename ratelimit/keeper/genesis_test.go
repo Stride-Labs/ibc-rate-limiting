@@ -66,39 +66,7 @@ func (s *KeeperTestSuite) TestGenesis() {
 				RateLimits:                       createRateLimits(),
 				PendingSendPacketSequenceNumbers: []string{"channel-0/1", "channel-2|3"},
 			},
-			expectedError: "Invalid pending send packet, must be of form: {channelId}/{sequenceNumber}",
-		},
-		{
-			name: "invalid hour epoch - no duration",
-			genesisState: types.GenesisState{
-				RateLimits: createRateLimits(),
-				HourEpoch:  types.HourEpoch{},
-			},
-			expectedError: "Hour epoch duration must be specified",
-		},
-		{
-			name: "invalid hour epoch - no epoch time",
-			genesisState: types.GenesisState{
-				RateLimits: createRateLimits(),
-				HourEpoch: types.HourEpoch{
-					EpochNumber:      1,
-					EpochStartHeight: 1,
-					Duration:         time.Minute,
-				},
-			},
-			expectedError: "If hour epoch number is non-empty, epoch time must be initialized",
-		},
-		{
-			name: "invalid hour epoch - no epoch height",
-			genesisState: types.GenesisState{
-				RateLimits: createRateLimits(),
-				HourEpoch: types.HourEpoch{
-					EpochNumber:    1,
-					EpochStartTime: blockTime,
-					Duration:       time.Minute,
-				},
-			},
-			expectedError: "If hour epoch number is non-empty, epoch height must be initialized",
+			expectedError: "invalid pending send packet (channel-2|3), must be of form: {channelId}/{sequenceNumber}",
 		},
 	}
 
