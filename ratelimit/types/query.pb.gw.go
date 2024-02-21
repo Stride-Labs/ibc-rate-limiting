@@ -576,17 +576,17 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_AllRateLimits_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "ratelimit", "ratelimits"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_AllRateLimits_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "ibc-rate-limiting", "ratelimit", "ratelimits"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_RateLimit_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"Stride-Labs", "stride", "ratelimit", "channel_id", "by_denom"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_RateLimit_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"Stride-Labs", "ibc-rate-limiting", "ratelimit", "channel_id", "by_denom"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_RateLimitsByChainId_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"Stride-Labs", "stride", "ratelimit", "ratelimits", "chain_id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_RateLimitsByChainId_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"Stride-Labs", "ibc-rate-limiting", "ratelimit", "ratelimits", "chain_id"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_RateLimitsByChannelId_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"Stride-Labs", "stride", "ratelimit", "ratelimits", "channel_id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_RateLimitsByChannelId_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"Stride-Labs", "ibc-rate-limiting", "ratelimit", "ratelimits", "channel_id"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_AllBlacklistedDenoms_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "ratelimit", "blacklisted_denoms"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_AllBlacklistedDenoms_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "ibc-rate-limiting", "ratelimit", "blacklisted_denoms"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_AllWhitelistedAddresses_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "ratelimit", "whitelisted_addresses"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_AllWhitelistedAddresses_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "ibc-rate-limiting", "ratelimit", "whitelisted_addresses"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
