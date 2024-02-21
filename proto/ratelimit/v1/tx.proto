@@ -2,6 +2,9 @@ syntax = "proto3";
 package ratelimit.v1;
 
 import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
 
 option go_package = "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types";
 
@@ -29,19 +32,19 @@ message MsgAddRateLimit {
   string denom = 2;
   // ChannelId for the rate limit, on the side of the rate limited chain
   string channel_id = 3;
-  // MaxPercentSend defines the threshold for outflows 
+  // MaxPercentSend defines the threshold for outflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_send = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // MaxPercentSend defines the threshold for inflows 
+  // MaxPercentSend defines the threshold for inflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_recv = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // DurationHours specifies the number of hours before the rate limit 
+  // DurationHours specifies the number of hours before the rate limit
   // is reset (e.g. 24 indicates that the rate limit is reset each day)
   uint64 duration_hours = 6;
 }
@@ -59,19 +62,19 @@ message MsgUpdateRateLimit {
   string denom = 2;
   // ChannelId for the rate limit, on the side of the rate limited chain
   string channel_id = 3;
-  // MaxPercentSend defines the threshold for outflows 
+  // MaxPercentSend defines the threshold for outflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_send = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // MaxPercentSend defines the threshold for inflows 
+  // MaxPercentSend defines the threshold for inflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_recv = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // DurationHours specifies the number of hours before the rate limit 
+  // DurationHours specifies the number of hours before the rate limit
   // is reset (e.g. 24 indicates that the rate limit is reset each day)
   uint64 duration_hours = 6;
 }

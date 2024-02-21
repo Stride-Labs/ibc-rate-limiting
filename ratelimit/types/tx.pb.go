@@ -4,10 +4,18 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-proto"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
+	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
+	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -24,28 +32,38 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type AddRateLimitProposal struct {
-	Title          string                                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Description    string                                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Denom          string                                 `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
-	ChannelId      string                                 `protobuf:"bytes,4,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
-	MaxPercentSend github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=max_percent_send,json=maxPercentSend,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_send"`
-	MaxPercentRecv github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=max_percent_recv,json=maxPercentRecv,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_recv"`
-	DurationHours  uint64                                 `protobuf:"varint,7,opt,name=duration_hours,json=durationHours,proto3" json:"duration_hours,omitempty"`
-	Deposit        string                                 `protobuf:"bytes,8,opt,name=deposit,proto3" json:"deposit,omitempty" yaml:"deposit"`
+// Gov tx to add a new rate limit
+type MsgAddRateLimit struct {
+	// Authority defines the x/gov module account
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// Denom for the rate limit, as it appears on the rate limited chain
+	// When rate limiting a non-native token, this will be an ibc denom
+	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	// ChannelId for the rate limit, on the side of the rate limited chain
+	ChannelId string `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+	// MaxPercentSend defines the threshold for outflows
+	// The threshold is defined as a percentage (e.g. 10 indicates 10%)
+	MaxPercentSend github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=max_percent_send,json=maxPercentSend,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_send"`
+	// MaxPercentSend defines the threshold for inflows
+	// The threshold is defined as a percentage (e.g. 10 indicates 10%)
+	MaxPercentRecv github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=max_percent_recv,json=maxPercentRecv,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_recv"`
+	// DurationHours specifies the number of hours before the rate limit
+	// is reset (e.g. 24 indicates that the rate limit is reset each day)
+	DurationHours uint64 `protobuf:"varint,6,opt,name=duration_hours,json=durationHours,proto3" json:"duration_hours,omitempty"`
 }
 
-func (m *AddRateLimitProposal) Reset()      { *m = AddRateLimitProposal{} }
-func (*AddRateLimitProposal) ProtoMessage() {}
-func (*AddRateLimitProposal) Descriptor() ([]byte, []int) {
+func (m *MsgAddRateLimit) Reset()         { *m = MsgAddRateLimit{} }
+func (m *MsgAddRateLimit) String() string { return proto.CompactTextString(m) }
+func (*MsgAddRateLimit) ProtoMessage()    {}
+func (*MsgAddRateLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_415b1435b4efaad0, []int{0}
 }
-func (m *AddRateLimitProposal) XXX_Unmarshal(b []byte) error {
+func (m *MsgAddRateLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *AddRateLimitProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAddRateLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_AddRateLimitProposal.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAddRateLimit.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -55,40 +73,61 @@ func (m *AddRateLimitProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *AddRateLimitProposal) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddRateLimitProposal.Merge(m, src)
+func (m *MsgAddRateLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddRateLimit.Merge(m, src)
 }
-func (m *AddRateLimitProposal) XXX_Size() int {
+func (m *MsgAddRateLimit) XXX_Size() int {
 	return m.Size()
 }
-func (m *AddRateLimitProposal) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddRateLimitProposal.DiscardUnknown(m)
+func (m *MsgAddRateLimit) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddRateLimit.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AddRateLimitProposal proto.InternalMessageInfo
+var xxx_messageInfo_MsgAddRateLimit proto.InternalMessageInfo
 
-type UpdateRateLimitProposal struct {
-	Title          string                                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Description    string                                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Denom          string                                 `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
-	ChannelId      string                                 `protobuf:"bytes,4,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
-	MaxPercentSend github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=max_percent_send,json=maxPercentSend,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_send"`
-	MaxPercentRecv github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=max_percent_recv,json=maxPercentRecv,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_recv"`
-	DurationHours  uint64                                 `protobuf:"varint,7,opt,name=duration_hours,json=durationHours,proto3" json:"duration_hours,omitempty"`
-	Deposit        string                                 `protobuf:"bytes,8,opt,name=deposit,proto3" json:"deposit,omitempty" yaml:"deposit"`
+func (m *MsgAddRateLimit) GetAuthority() string {
+	if m != nil {
+		return m.Authority
+	}
+	return ""
 }
 
-func (m *UpdateRateLimitProposal) Reset()      { *m = UpdateRateLimitProposal{} }
-func (*UpdateRateLimitProposal) ProtoMessage() {}
-func (*UpdateRateLimitProposal) Descriptor() ([]byte, []int) {
+func (m *MsgAddRateLimit) GetDenom() string {
+	if m != nil {
+		return m.Denom
+	}
+	return ""
+}
+
+func (m *MsgAddRateLimit) GetChannelId() string {
+	if m != nil {
+		return m.ChannelId
+	}
+	return ""
+}
+
+func (m *MsgAddRateLimit) GetDurationHours() uint64 {
+	if m != nil {
+		return m.DurationHours
+	}
+	return 0
+}
+
+type MsgAddRateLimitResponse struct {
+}
+
+func (m *MsgAddRateLimitResponse) Reset()         { *m = MsgAddRateLimitResponse{} }
+func (m *MsgAddRateLimitResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgAddRateLimitResponse) ProtoMessage()    {}
+func (*MsgAddRateLimitResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_415b1435b4efaad0, []int{1}
 }
-func (m *UpdateRateLimitProposal) XXX_Unmarshal(b []byte) error {
+func (m *MsgAddRateLimitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *UpdateRateLimitProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAddRateLimitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_UpdateRateLimitProposal.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAddRateLimitResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -98,37 +137,50 @@ func (m *UpdateRateLimitProposal) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *UpdateRateLimitProposal) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UpdateRateLimitProposal.Merge(m, src)
+func (m *MsgAddRateLimitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddRateLimitResponse.Merge(m, src)
 }
-func (m *UpdateRateLimitProposal) XXX_Size() int {
+func (m *MsgAddRateLimitResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *UpdateRateLimitProposal) XXX_DiscardUnknown() {
-	xxx_messageInfo_UpdateRateLimitProposal.DiscardUnknown(m)
+func (m *MsgAddRateLimitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddRateLimitResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_UpdateRateLimitProposal proto.InternalMessageInfo
+var xxx_messageInfo_MsgAddRateLimitResponse proto.InternalMessageInfo
 
-type RemoveRateLimitProposal struct {
-	Title       string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Denom       string `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
-	ChannelId   string `protobuf:"bytes,4,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
-	Deposit     string `protobuf:"bytes,5,opt,name=deposit,proto3" json:"deposit,omitempty" yaml:"deposit"`
+// Gov tx to update an existing rate limit
+type MsgUpdateRateLimit struct {
+	// Authority defines the x/gov module account
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// Denom for the rate limit, as it appears on the rate limited chain
+	// When rate limiting a non-native token, this will be an ibc denom
+	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	// ChannelId for the rate limit, on the side of the rate limited chain
+	ChannelId string `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+	// MaxPercentSend defines the threshold for outflows
+	// The threshold is defined as a percentage (e.g. 10 indicates 10%)
+	MaxPercentSend github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=max_percent_send,json=maxPercentSend,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_send"`
+	// MaxPercentSend defines the threshold for inflows
+	// The threshold is defined as a percentage (e.g. 10 indicates 10%)
+	MaxPercentRecv github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=max_percent_recv,json=maxPercentRecv,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_recv"`
+	// DurationHours specifies the number of hours before the rate limit
+	// is reset (e.g. 24 indicates that the rate limit is reset each day)
+	DurationHours uint64 `protobuf:"varint,6,opt,name=duration_hours,json=durationHours,proto3" json:"duration_hours,omitempty"`
 }
 
-func (m *RemoveRateLimitProposal) Reset()      { *m = RemoveRateLimitProposal{} }
-func (*RemoveRateLimitProposal) ProtoMessage() {}
-func (*RemoveRateLimitProposal) Descriptor() ([]byte, []int) {
+func (m *MsgUpdateRateLimit) Reset()         { *m = MsgUpdateRateLimit{} }
+func (m *MsgUpdateRateLimit) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateRateLimit) ProtoMessage()    {}
+func (*MsgUpdateRateLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_415b1435b4efaad0, []int{2}
 }
-func (m *RemoveRateLimitProposal) XXX_Unmarshal(b []byte) error {
+func (m *MsgUpdateRateLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *RemoveRateLimitProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgUpdateRateLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_RemoveRateLimitProposal.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgUpdateRateLimit.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -138,37 +190,61 @@ func (m *RemoveRateLimitProposal) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *RemoveRateLimitProposal) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RemoveRateLimitProposal.Merge(m, src)
+func (m *MsgUpdateRateLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateRateLimit.Merge(m, src)
 }
-func (m *RemoveRateLimitProposal) XXX_Size() int {
+func (m *MsgUpdateRateLimit) XXX_Size() int {
 	return m.Size()
 }
-func (m *RemoveRateLimitProposal) XXX_DiscardUnknown() {
-	xxx_messageInfo_RemoveRateLimitProposal.DiscardUnknown(m)
+func (m *MsgUpdateRateLimit) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateRateLimit.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RemoveRateLimitProposal proto.InternalMessageInfo
+var xxx_messageInfo_MsgUpdateRateLimit proto.InternalMessageInfo
 
-type ResetRateLimitProposal struct {
-	Title       string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Denom       string `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
-	ChannelId   string `protobuf:"bytes,4,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
-	Deposit     string `protobuf:"bytes,5,opt,name=deposit,proto3" json:"deposit,omitempty" yaml:"deposit"`
+func (m *MsgUpdateRateLimit) GetAuthority() string {
+	if m != nil {
+		return m.Authority
+	}
+	return ""
 }
 
-func (m *ResetRateLimitProposal) Reset()      { *m = ResetRateLimitProposal{} }
-func (*ResetRateLimitProposal) ProtoMessage() {}
-func (*ResetRateLimitProposal) Descriptor() ([]byte, []int) {
+func (m *MsgUpdateRateLimit) GetDenom() string {
+	if m != nil {
+		return m.Denom
+	}
+	return ""
+}
+
+func (m *MsgUpdateRateLimit) GetChannelId() string {
+	if m != nil {
+		return m.ChannelId
+	}
+	return ""
+}
+
+func (m *MsgUpdateRateLimit) GetDurationHours() uint64 {
+	if m != nil {
+		return m.DurationHours
+	}
+	return 0
+}
+
+type MsgUpdateRateLimitResponse struct {
+}
+
+func (m *MsgUpdateRateLimitResponse) Reset()         { *m = MsgUpdateRateLimitResponse{} }
+func (m *MsgUpdateRateLimitResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateRateLimitResponse) ProtoMessage()    {}
+func (*MsgUpdateRateLimitResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_415b1435b4efaad0, []int{3}
 }
-func (m *ResetRateLimitProposal) XXX_Unmarshal(b []byte) error {
+func (m *MsgUpdateRateLimitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ResetRateLimitProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgUpdateRateLimitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ResetRateLimitProposal.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgUpdateRateLimitResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -178,222 +254,471 @@ func (m *ResetRateLimitProposal) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *ResetRateLimitProposal) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResetRateLimitProposal.Merge(m, src)
+func (m *MsgUpdateRateLimitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateRateLimitResponse.Merge(m, src)
 }
-func (m *ResetRateLimitProposal) XXX_Size() int {
+func (m *MsgUpdateRateLimitResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *ResetRateLimitProposal) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResetRateLimitProposal.DiscardUnknown(m)
+func (m *MsgUpdateRateLimitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateRateLimitResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ResetRateLimitProposal proto.InternalMessageInfo
+var xxx_messageInfo_MsgUpdateRateLimitResponse proto.InternalMessageInfo
+
+// Gov tx to remove a rate limit
+type MsgRemoveRateLimit struct {
+	// Authority defines the x/gov module account
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// Denom for the rate limit, as it appears on the rate limited chain
+	// When rate limiting a non-native token, this will be an ibc denom
+	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	// ChannelId for the rate limit, on the side of the rate limited chain
+	ChannelId string `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+}
+
+func (m *MsgRemoveRateLimit) Reset()         { *m = MsgRemoveRateLimit{} }
+func (m *MsgRemoveRateLimit) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveRateLimit) ProtoMessage()    {}
+func (*MsgRemoveRateLimit) Descriptor() ([]byte, []int) {
+	return fileDescriptor_415b1435b4efaad0, []int{4}
+}
+func (m *MsgRemoveRateLimit) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveRateLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveRateLimit.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveRateLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveRateLimit.Merge(m, src)
+}
+func (m *MsgRemoveRateLimit) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveRateLimit) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveRateLimit.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveRateLimit proto.InternalMessageInfo
+
+func (m *MsgRemoveRateLimit) GetAuthority() string {
+	if m != nil {
+		return m.Authority
+	}
+	return ""
+}
+
+func (m *MsgRemoveRateLimit) GetDenom() string {
+	if m != nil {
+		return m.Denom
+	}
+	return ""
+}
+
+func (m *MsgRemoveRateLimit) GetChannelId() string {
+	if m != nil {
+		return m.ChannelId
+	}
+	return ""
+}
+
+type MsgRemoveRateLimitResponse struct {
+}
+
+func (m *MsgRemoveRateLimitResponse) Reset()         { *m = MsgRemoveRateLimitResponse{} }
+func (m *MsgRemoveRateLimitResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveRateLimitResponse) ProtoMessage()    {}
+func (*MsgRemoveRateLimitResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_415b1435b4efaad0, []int{5}
+}
+func (m *MsgRemoveRateLimitResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveRateLimitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveRateLimitResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveRateLimitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveRateLimitResponse.Merge(m, src)
+}
+func (m *MsgRemoveRateLimitResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveRateLimitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveRateLimitResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveRateLimitResponse proto.InternalMessageInfo
+
+// Gov tx to reset the flow on a rate limit
+type MsgResetRateLimit struct {
+	// Authority defines the x/gov module account
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// Denom for the rate limit, as it appears on the rate limited chain
+	// When rate limiting a non-native token, this will be an ibc denom
+	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	// ChannelId for the rate limit, on the side of the rate limited chain
+	ChannelId string `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+}
+
+func (m *MsgResetRateLimit) Reset()         { *m = MsgResetRateLimit{} }
+func (m *MsgResetRateLimit) String() string { return proto.CompactTextString(m) }
+func (*MsgResetRateLimit) ProtoMessage()    {}
+func (*MsgResetRateLimit) Descriptor() ([]byte, []int) {
+	return fileDescriptor_415b1435b4efaad0, []int{6}
+}
+func (m *MsgResetRateLimit) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgResetRateLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgResetRateLimit.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgResetRateLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgResetRateLimit.Merge(m, src)
+}
+func (m *MsgResetRateLimit) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgResetRateLimit) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgResetRateLimit.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgResetRateLimit proto.InternalMessageInfo
+
+func (m *MsgResetRateLimit) GetAuthority() string {
+	if m != nil {
+		return m.Authority
+	}
+	return ""
+}
+
+func (m *MsgResetRateLimit) GetDenom() string {
+	if m != nil {
+		return m.Denom
+	}
+	return ""
+}
+
+func (m *MsgResetRateLimit) GetChannelId() string {
+	if m != nil {
+		return m.ChannelId
+	}
+	return ""
+}
+
+type MsgResetRateLimitResponse struct {
+}
+
+func (m *MsgResetRateLimitResponse) Reset()         { *m = MsgResetRateLimitResponse{} }
+func (m *MsgResetRateLimitResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgResetRateLimitResponse) ProtoMessage()    {}
+func (*MsgResetRateLimitResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_415b1435b4efaad0, []int{7}
+}
+func (m *MsgResetRateLimitResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgResetRateLimitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgResetRateLimitResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgResetRateLimitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgResetRateLimitResponse.Merge(m, src)
+}
+func (m *MsgResetRateLimitResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgResetRateLimitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgResetRateLimitResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgResetRateLimitResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*AddRateLimitProposal)(nil), "ratelimit.v1.AddRateLimitProposal")
-	proto.RegisterType((*UpdateRateLimitProposal)(nil), "ratelimit.v1.UpdateRateLimitProposal")
-	proto.RegisterType((*RemoveRateLimitProposal)(nil), "ratelimit.v1.RemoveRateLimitProposal")
-	proto.RegisterType((*ResetRateLimitProposal)(nil), "ratelimit.v1.ResetRateLimitProposal")
+	proto.RegisterType((*MsgAddRateLimit)(nil), "ratelimit.v1.MsgAddRateLimit")
+	proto.RegisterType((*MsgAddRateLimitResponse)(nil), "ratelimit.v1.MsgAddRateLimitResponse")
+	proto.RegisterType((*MsgUpdateRateLimit)(nil), "ratelimit.v1.MsgUpdateRateLimit")
+	proto.RegisterType((*MsgUpdateRateLimitResponse)(nil), "ratelimit.v1.MsgUpdateRateLimitResponse")
+	proto.RegisterType((*MsgRemoveRateLimit)(nil), "ratelimit.v1.MsgRemoveRateLimit")
+	proto.RegisterType((*MsgRemoveRateLimitResponse)(nil), "ratelimit.v1.MsgRemoveRateLimitResponse")
+	proto.RegisterType((*MsgResetRateLimit)(nil), "ratelimit.v1.MsgResetRateLimit")
+	proto.RegisterType((*MsgResetRateLimitResponse)(nil), "ratelimit.v1.MsgResetRateLimitResponse")
 }
 
 func init() { proto.RegisterFile("ratelimit/v1/tx.proto", fileDescriptor_415b1435b4efaad0) }
 
 var fileDescriptor_415b1435b4efaad0 = []byte{
-	// 441 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x54, 0x31, 0x8b, 0x13, 0x41,
-	0x14, 0xde, 0x31, 0x97, 0x3b, 0x6f, 0x3c, 0x83, 0x2c, 0xd1, 0x5b, 0x04, 0x77, 0x43, 0x40, 0xb9,
-	0xc2, 0xec, 0x72, 0xd8, 0xc8, 0x75, 0x5e, 0xe5, 0xc1, 0x15, 0xc7, 0x1c, 0x82, 0xd8, 0x84, 0xc9,
-	0xce, 0x23, 0x19, 0xdc, 0x99, 0x59, 0x66, 0x5e, 0x96, 0xdc, 0x3f, 0xb0, 0xb4, 0x14, 0x41, 0xc8,
-	0x5f, 0xd1, 0xea, 0xca, 0x2b, 0xc5, 0x22, 0x48, 0xd2, 0x58, 0xfb, 0x0b, 0x64, 0x27, 0x89, 0x06,
-	0xac, 0xc4, 0x42, 0x05, 0xab, 0xdd, 0xf7, 0x7d, 0xdf, 0x7b, 0xc3, 0xc7, 0x7b, 0x7c, 0xf4, 0xb6,
-	0xe5, 0x08, 0x85, 0x54, 0x12, 0xb3, 0xea, 0x30, 0xc3, 0x49, 0x5a, 0x5a, 0x83, 0x26, 0xdc, 0xfb,
-	0x0e, 0xa7, 0xd5, 0xe1, 0xdd, 0xf6, 0xd0, 0x0c, 0x8d, 0x27, 0xb2, 0xfa, 0x6f, 0xa9, 0xe9, 0xbe,
-	0x6d, 0xd0, 0xf6, 0x13, 0x21, 0x18, 0x47, 0x38, 0xad, 0x95, 0x67, 0xd6, 0x94, 0xc6, 0xf1, 0x22,
-	0x6c, 0xd3, 0x26, 0x4a, 0x2c, 0x20, 0x22, 0x1d, 0x72, 0xb0, 0xcb, 0x96, 0x45, 0xd8, 0xa1, 0x37,
-	0x04, 0xb8, 0xdc, 0xca, 0x12, 0xa5, 0xd1, 0xd1, 0x35, 0xcf, 0x6d, 0x42, 0x75, 0x9f, 0x00, 0x6d,
-	0x54, 0xd4, 0x58, 0xf6, 0xf9, 0x22, 0xbc, 0x47, 0x69, 0x3e, 0xe2, 0x5a, 0x43, 0xd1, 0x97, 0x22,
-	0xda, 0xf2, 0xd4, 0xee, 0x0a, 0x39, 0x11, 0xe1, 0x73, 0x7a, 0x4b, 0xf1, 0x49, 0xbf, 0x04, 0x9b,
-	0x83, 0xc6, 0xbe, 0x03, 0x2d, 0xa2, 0x66, 0x2d, 0x3a, 0x4e, 0x2f, 0x67, 0x49, 0xf0, 0x69, 0x96,
-	0x3c, 0x18, 0x4a, 0x1c, 0x8d, 0x07, 0x69, 0x6e, 0x54, 0x96, 0x1b, 0xa7, 0x8c, 0x5b, 0x7d, 0x7a,
-	0x4e, 0xbc, 0xcc, 0xf0, 0xa2, 0x04, 0x97, 0x9e, 0x68, 0x64, 0x2d, 0xc5, 0x27, 0x67, 0xcb, 0x31,
-	0xe7, 0xa0, 0x7f, 0x9a, 0x6c, 0x21, 0xaf, 0xa2, 0xed, 0xdf, 0x9d, 0xcc, 0x20, 0xaf, 0xc2, 0xfb,
-	0xb4, 0x25, 0xc6, 0x96, 0xd7, 0xa6, 0xfb, 0x23, 0x33, 0xb6, 0x2e, 0xda, 0xe9, 0x90, 0x83, 0x2d,
-	0x76, 0x73, 0x8d, 0x3e, 0xad, 0xc1, 0xf0, 0x21, 0xdd, 0x11, 0x50, 0x1a, 0x27, 0x31, 0xba, 0xee,
-	0xdf, 0x0d, 0xbf, 0xce, 0x92, 0xd6, 0x05, 0x57, 0xc5, 0x51, 0x77, 0x45, 0x74, 0xd9, 0x5a, 0x72,
-	0xb4, 0xf7, 0x6a, 0x9a, 0x04, 0x6f, 0xa6, 0x49, 0xf0, 0x65, 0x9a, 0x90, 0xee, 0xbb, 0x06, 0xdd,
-	0x7f, 0x56, 0x0a, 0x8e, 0xf0, 0x7f, 0x3f, 0x7f, 0xe3, 0x7e, 0x3e, 0x10, 0xba, 0xcf, 0x40, 0x99,
-	0xea, 0x4f, 0xef, 0x67, 0xc3, 0x44, 0xf3, 0x57, 0x4d, 0xbc, 0x27, 0xf4, 0x0e, 0x03, 0x07, 0xf8,
-	0xef, 0x7a, 0x38, 0x66, 0x97, 0xf3, 0x98, 0x5c, 0xcd, 0x63, 0xf2, 0x79, 0x1e, 0x93, 0xd7, 0x8b,
-	0x38, 0xb8, 0x5a, 0xc4, 0xc1, 0xc7, 0x45, 0x1c, 0xbc, 0x78, 0xbc, 0x71, 0x3d, 0xe7, 0x68, 0xa5,
-	0x80, 0xde, 0x29, 0x1f, 0xb8, 0x4c, 0x0e, 0xf2, 0x5e, 0x1d, 0x8f, 0x3d, 0x9f, 0x8f, 0x52, 0x0f,
-	0xb3, 0x1f, 0x19, 0xea, 0x6f, 0x6a, 0xb0, 0xed, 0x03, 0xf2, 0xd1, 0xb7, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0x47, 0xca, 0xc7, 0x7a, 0x5d, 0x05, 0x00, 0x00,
+	// 577 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x55, 0x4f, 0x6b, 0x13, 0x41,
+	0x1c, 0xcd, 0x36, 0x6d, 0xa1, 0x43, 0x4d, 0xed, 0x12, 0xe9, 0x66, 0xdb, 0x6e, 0x42, 0xa0, 0x1a,
+	0x8a, 0xd9, 0xa5, 0x0a, 0x22, 0xde, 0xda, 0x93, 0x85, 0x06, 0x64, 0xab, 0x20, 0x05, 0x09, 0x93,
+	0x9d, 0x61, 0x32, 0xd8, 0x99, 0x09, 0x3b, 0x93, 0x90, 0x5e, 0xbd, 0x08, 0x82, 0xe0, 0x47, 0x09,
+	0xe2, 0x87, 0xe8, 0xb1, 0x78, 0x12, 0x0f, 0x45, 0x92, 0x43, 0x3f, 0x81, 0x77, 0xd9, 0x3f, 0xf9,
+	0xd3, 0xd9, 0x6a, 0x0e, 0x0a, 0xbd, 0x78, 0x49, 0x32, 0xef, 0xf7, 0xe6, 0xcd, 0xbc, 0x79, 0xf3,
+	0x9b, 0x80, 0x7b, 0x21, 0x54, 0xf8, 0x94, 0x32, 0xaa, 0xbc, 0xde, 0x9e, 0xa7, 0xfa, 0x6e, 0x27,
+	0x14, 0x4a, 0x98, 0xab, 0x13, 0xd8, 0xed, 0xed, 0xd9, 0x45, 0x22, 0x88, 0x88, 0x0b, 0x5e, 0xf4,
+	0x2b, 0xe1, 0xd8, 0xeb, 0x90, 0x51, 0x2e, 0xbc, 0xf8, 0x33, 0x85, 0x4a, 0x81, 0x90, 0x4c, 0xc8,
+	0x66, 0xc2, 0x4d, 0x06, 0x69, 0x69, 0x23, 0x19, 0x79, 0x4c, 0x92, 0x68, 0x25, 0x26, 0x49, 0x52,
+	0xa8, 0xbe, 0xcf, 0x83, 0xb5, 0x86, 0x24, 0xfb, 0x08, 0xf9, 0x50, 0xe1, 0xa3, 0x68, 0x4d, 0xf3,
+	0x09, 0x58, 0x81, 0x5d, 0xd5, 0x16, 0x21, 0x55, 0x67, 0x96, 0x51, 0x31, 0x6a, 0x2b, 0x07, 0xd6,
+	0xd7, 0x2f, 0xf5, 0x62, 0xaa, 0xb8, 0x8f, 0x50, 0x88, 0xa5, 0x3c, 0x56, 0x21, 0xe5, 0xc4, 0x9f,
+	0x52, 0xcd, 0x22, 0x58, 0x42, 0x98, 0x0b, 0x66, 0x2d, 0x44, 0x73, 0xfc, 0x64, 0x60, 0x6e, 0x03,
+	0x10, 0xb4, 0x21, 0xe7, 0xf8, 0xb4, 0x49, 0x91, 0x95, 0x8f, 0x4b, 0x2b, 0x29, 0x72, 0x88, 0xcc,
+	0xd7, 0xe0, 0x2e, 0x83, 0xfd, 0x66, 0x07, 0x87, 0x01, 0xe6, 0xaa, 0x29, 0x31, 0x47, 0xd6, 0x62,
+	0xbc, 0xa6, 0x7b, 0x7e, 0x59, 0xce, 0x7d, 0xbf, 0x2c, 0xdf, 0x27, 0x54, 0xb5, 0xbb, 0x2d, 0x37,
+	0x10, 0x2c, 0x35, 0x95, 0x7e, 0xd5, 0x25, 0x7a, 0xeb, 0xa9, 0xb3, 0x0e, 0x96, 0xee, 0x21, 0x57,
+	0x7e, 0x81, 0xc1, 0xfe, 0x8b, 0x44, 0xe6, 0x18, 0xf3, 0x8c, 0x72, 0x88, 0x83, 0x9e, 0xb5, 0xf4,
+	0xb7, 0xca, 0x3e, 0x0e, 0x7a, 0xe6, 0x0e, 0x28, 0xa0, 0x6e, 0x08, 0x15, 0x15, 0xbc, 0xd9, 0x16,
+	0xdd, 0x50, 0x5a, 0xcb, 0x15, 0xa3, 0xb6, 0xe8, 0xdf, 0x19, 0xa3, 0xcf, 0x23, 0xf0, 0xd9, 0xc3,
+	0x77, 0x57, 0x83, 0xdd, 0xe9, 0xf9, 0x7c, 0xb8, 0x1a, 0xec, 0x96, 0xa6, 0x81, 0x6b, 0xa7, 0x5e,
+	0x2d, 0x81, 0x0d, 0x0d, 0xf2, 0xb1, 0xec, 0x08, 0x2e, 0x71, 0xf5, 0x63, 0x1e, 0x98, 0x0d, 0x49,
+	0x5e, 0x75, 0x10, 0x54, 0xf8, 0x7f, 0x4e, 0xff, 0x3a, 0x27, 0x2f, 0x9b, 0xd3, 0xd6, 0xb5, 0x9c,
+	0xb4, 0x83, 0xaf, 0x6e, 0x01, 0x3b, 0x8b, 0x4e, 0xd2, 0xfa, 0x6c, 0xc4, 0x69, 0xf9, 0x98, 0x89,
+	0xde, 0x2d, 0xa5, 0x35, 0xdf, 0x92, 0xb6, 0xbb, 0xd4, 0x92, 0x86, 0x4e, 0x2c, 0x0d, 0x0c, 0xb0,
+	0x1e, 0x97, 0x25, 0x56, 0xb7, 0xe4, 0xc8, 0xcd, 0x3a, 0xda, 0xd4, 0x1c, 0xcd, 0x6e, 0xae, 0xba,
+	0x09, 0x4a, 0x19, 0x70, 0xec, 0xe7, 0xd1, 0xcf, 0x05, 0x90, 0x6f, 0x48, 0x62, 0xbe, 0x04, 0xab,
+	0xd7, 0x5e, 0xbe, 0x6d, 0x77, 0xf6, 0xe5, 0x75, 0xb5, 0x7e, 0xb4, 0x77, 0xfe, 0x58, 0x1e, 0xab,
+	0x9b, 0x6f, 0xc0, 0x9a, 0xde, 0xaa, 0x95, 0xcc, 0x4c, 0x8d, 0x61, 0xd7, 0xe6, 0x31, 0x66, 0xe5,
+	0xf5, 0xbb, 0x95, 0x95, 0xd7, 0x18, 0x37, 0xc8, 0xff, 0x26, 0x6b, 0xf3, 0x04, 0x14, 0xb4, 0x9c,
+	0xcb, 0x37, 0xcc, 0x9d, 0x25, 0xd8, 0x0f, 0xe6, 0x10, 0xc6, 0xda, 0x07, 0xfe, 0xf9, 0xd0, 0x31,
+	0x2e, 0x86, 0x8e, 0xf1, 0x63, 0xe8, 0x18, 0x9f, 0x46, 0x4e, 0xee, 0x62, 0xe4, 0xe4, 0xbe, 0x8d,
+	0x9c, 0xdc, 0xc9, 0xd3, 0x99, 0x16, 0x8f, 0x6e, 0x0c, 0xc2, 0xf5, 0x23, 0xd8, 0x92, 0x1e, 0x6d,
+	0x05, 0xf5, 0x48, 0xbc, 0x1e, 0xab, 0x53, 0x4e, 0xbc, 0x69, 0xe8, 0x71, 0xe3, 0xb7, 0x96, 0xe3,
+	0x3f, 0xb2, 0xc7, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0xd7, 0x37, 0xb8, 0x9b, 0x4c, 0x07, 0x00,
+	0x00,
 }
 
-func (this *AddRateLimitProposal) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
 
-	that1, ok := that.(*AddRateLimitProposal)
-	if !ok {
-		that2, ok := that.(AddRateLimitProposal)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.Title != that1.Title {
-		return false
-	}
-	if this.Description != that1.Description {
-		return false
-	}
-	if this.Denom != that1.Denom {
-		return false
-	}
-	if this.ChannelId != that1.ChannelId {
-		return false
-	}
-	if !this.MaxPercentSend.Equal(that1.MaxPercentSend) {
-		return false
-	}
-	if !this.MaxPercentRecv.Equal(that1.MaxPercentRecv) {
-		return false
-	}
-	if this.DurationHours != that1.DurationHours {
-		return false
-	}
-	if this.Deposit != that1.Deposit {
-		return false
-	}
-	return true
-}
-func (this *UpdateRateLimitProposal) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
 
-	that1, ok := that.(*UpdateRateLimitProposal)
-	if !ok {
-		that2, ok := that.(UpdateRateLimitProposal)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.Title != that1.Title {
-		return false
-	}
-	if this.Description != that1.Description {
-		return false
-	}
-	if this.Denom != that1.Denom {
-		return false
-	}
-	if this.ChannelId != that1.ChannelId {
-		return false
-	}
-	if !this.MaxPercentSend.Equal(that1.MaxPercentSend) {
-		return false
-	}
-	if !this.MaxPercentRecv.Equal(that1.MaxPercentRecv) {
-		return false
-	}
-	if this.DurationHours != that1.DurationHours {
-		return false
-	}
-	if this.Deposit != that1.Deposit {
-		return false
-	}
-	return true
+// MsgClient is the client API for Msg service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type MsgClient interface {
+	// Gov tx to add a new rate limit
+	AddRateLimit(ctx context.Context, in *MsgAddRateLimit, opts ...grpc.CallOption) (*MsgAddRateLimitResponse, error)
+	// Gov tx to update an existing rate limit
+	UpdateRateLimit(ctx context.Context, in *MsgUpdateRateLimit, opts ...grpc.CallOption) (*MsgUpdateRateLimitResponse, error)
+	// Gov tx to remove a rate limit
+	RemoveRateLimit(ctx context.Context, in *MsgRemoveRateLimit, opts ...grpc.CallOption) (*MsgRemoveRateLimitResponse, error)
+	// Gov tx to reset the flow on a rate limit
+	ResetRateLimit(ctx context.Context, in *MsgResetRateLimit, opts ...grpc.CallOption) (*MsgResetRateLimitResponse, error)
 }
-func (this *RemoveRateLimitProposal) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
 
-	that1, ok := that.(*RemoveRateLimitProposal)
-	if !ok {
-		that2, ok := that.(RemoveRateLimitProposal)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.Title != that1.Title {
-		return false
-	}
-	if this.Description != that1.Description {
-		return false
-	}
-	if this.Denom != that1.Denom {
-		return false
-	}
-	if this.ChannelId != that1.ChannelId {
-		return false
-	}
-	if this.Deposit != that1.Deposit {
-		return false
-	}
-	return true
+type msgClient struct {
+	cc grpc1.ClientConn
 }
-func (this *ResetRateLimitProposal) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
 
-	that1, ok := that.(*ResetRateLimitProposal)
-	if !ok {
-		that2, ok := that.(ResetRateLimitProposal)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.Title != that1.Title {
-		return false
-	}
-	if this.Description != that1.Description {
-		return false
-	}
-	if this.Denom != that1.Denom {
-		return false
-	}
-	if this.ChannelId != that1.ChannelId {
-		return false
-	}
-	if this.Deposit != that1.Deposit {
-		return false
-	}
-	return true
+func NewMsgClient(cc grpc1.ClientConn) MsgClient {
+	return &msgClient{cc}
 }
-func (m *AddRateLimitProposal) Marshal() (dAtA []byte, err error) {
+
+func (c *msgClient) AddRateLimit(ctx context.Context, in *MsgAddRateLimit, opts ...grpc.CallOption) (*MsgAddRateLimitResponse, error) {
+	out := new(MsgAddRateLimitResponse)
+	err := c.cc.Invoke(ctx, "/ratelimit.v1.Msg/AddRateLimit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) UpdateRateLimit(ctx context.Context, in *MsgUpdateRateLimit, opts ...grpc.CallOption) (*MsgUpdateRateLimitResponse, error) {
+	out := new(MsgUpdateRateLimitResponse)
+	err := c.cc.Invoke(ctx, "/ratelimit.v1.Msg/UpdateRateLimit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RemoveRateLimit(ctx context.Context, in *MsgRemoveRateLimit, opts ...grpc.CallOption) (*MsgRemoveRateLimitResponse, error) {
+	out := new(MsgRemoveRateLimitResponse)
+	err := c.cc.Invoke(ctx, "/ratelimit.v1.Msg/RemoveRateLimit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ResetRateLimit(ctx context.Context, in *MsgResetRateLimit, opts ...grpc.CallOption) (*MsgResetRateLimitResponse, error) {
+	out := new(MsgResetRateLimitResponse)
+	err := c.cc.Invoke(ctx, "/ratelimit.v1.Msg/ResetRateLimit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MsgServer is the server API for Msg service.
+type MsgServer interface {
+	// Gov tx to add a new rate limit
+	AddRateLimit(context.Context, *MsgAddRateLimit) (*MsgAddRateLimitResponse, error)
+	// Gov tx to update an existing rate limit
+	UpdateRateLimit(context.Context, *MsgUpdateRateLimit) (*MsgUpdateRateLimitResponse, error)
+	// Gov tx to remove a rate limit
+	RemoveRateLimit(context.Context, *MsgRemoveRateLimit) (*MsgRemoveRateLimitResponse, error)
+	// Gov tx to reset the flow on a rate limit
+	ResetRateLimit(context.Context, *MsgResetRateLimit) (*MsgResetRateLimitResponse, error)
+}
+
+// UnimplementedMsgServer can be embedded to have forward compatible implementations.
+type UnimplementedMsgServer struct {
+}
+
+func (*UnimplementedMsgServer) AddRateLimit(ctx context.Context, req *MsgAddRateLimit) (*MsgAddRateLimitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddRateLimit not implemented")
+}
+func (*UnimplementedMsgServer) UpdateRateLimit(ctx context.Context, req *MsgUpdateRateLimit) (*MsgUpdateRateLimitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRateLimit not implemented")
+}
+func (*UnimplementedMsgServer) RemoveRateLimit(ctx context.Context, req *MsgRemoveRateLimit) (*MsgRemoveRateLimitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveRateLimit not implemented")
+}
+func (*UnimplementedMsgServer) ResetRateLimit(ctx context.Context, req *MsgResetRateLimit) (*MsgResetRateLimitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResetRateLimit not implemented")
+}
+
+func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
+	s.RegisterService(&_Msg_serviceDesc, srv)
+}
+
+func _Msg_AddRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddRateLimit)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AddRateLimit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ratelimit.v1.Msg/AddRateLimit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AddRateLimit(ctx, req.(*MsgAddRateLimit))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_UpdateRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateRateLimit)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateRateLimit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ratelimit.v1.Msg/UpdateRateLimit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateRateLimit(ctx, req.(*MsgUpdateRateLimit))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RemoveRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveRateLimit)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RemoveRateLimit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ratelimit.v1.Msg/RemoveRateLimit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RemoveRateLimit(ctx, req.(*MsgRemoveRateLimit))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ResetRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgResetRateLimit)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ResetRateLimit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ratelimit.v1.Msg/ResetRateLimit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ResetRateLimit(ctx, req.(*MsgResetRateLimit))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Msg_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "ratelimit.v1.Msg",
+	HandlerType: (*MsgServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddRateLimit",
+			Handler:    _Msg_AddRateLimit_Handler,
+		},
+		{
+			MethodName: "UpdateRateLimit",
+			Handler:    _Msg_UpdateRateLimit_Handler,
+		},
+		{
+			MethodName: "RemoveRateLimit",
+			Handler:    _Msg_RemoveRateLimit_Handler,
+		},
+		{
+			MethodName: "ResetRateLimit",
+			Handler:    _Msg_ResetRateLimit_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "ratelimit/v1/tx.proto",
+}
+
+func (m *MsgAddRateLimit) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -403,27 +728,20 @@ func (m *AddRateLimitProposal) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *AddRateLimitProposal) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAddRateLimit) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *AddRateLimitProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAddRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Deposit) > 0 {
-		i -= len(m.Deposit)
-		copy(dAtA[i:], m.Deposit)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Deposit)))
-		i--
-		dAtA[i] = 0x42
-	}
 	if m.DurationHours != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.DurationHours))
 		i--
-		dAtA[i] = 0x38
+		dAtA[i] = 0x30
 	}
 	{
 		size := m.MaxPercentRecv.Size()
@@ -434,7 +752,7 @@ func (m *AddRateLimitProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x32
+	dAtA[i] = 0x2a
 	{
 		size := m.MaxPercentSend.Size()
 		i -= size
@@ -444,39 +762,32 @@ func (m *AddRateLimitProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x2a
+	dAtA[i] = 0x22
 	if len(m.ChannelId) > 0 {
 		i -= len(m.ChannelId)
 		copy(dAtA[i:], m.ChannelId)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.ChannelId)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if len(m.Denom) > 0 {
 		i -= len(m.Denom)
 		copy(dAtA[i:], m.Denom)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Denom)))
 		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Description) > 0 {
-		i -= len(m.Description)
-		copy(dAtA[i:], m.Description)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Description)))
-		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Title) > 0 {
-		i -= len(m.Title)
-		copy(dAtA[i:], m.Title)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Title)))
+	if len(m.Authority) > 0 {
+		i -= len(m.Authority)
+		copy(dAtA[i:], m.Authority)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Authority)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *UpdateRateLimitProposal) Marshal() (dAtA []byte, err error) {
+func (m *MsgAddRateLimitResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -486,27 +797,43 @@ func (m *UpdateRateLimitProposal) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *UpdateRateLimitProposal) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAddRateLimitResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *UpdateRateLimitProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAddRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Deposit) > 0 {
-		i -= len(m.Deposit)
-		copy(dAtA[i:], m.Deposit)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Deposit)))
-		i--
-		dAtA[i] = 0x42
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateRateLimit) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
 	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateRateLimit) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
 	if m.DurationHours != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.DurationHours))
 		i--
-		dAtA[i] = 0x38
+		dAtA[i] = 0x30
 	}
 	{
 		size := m.MaxPercentRecv.Size()
@@ -517,7 +844,7 @@ func (m *UpdateRateLimitProposal) MarshalToSizedBuffer(dAtA []byte) (int, error)
 		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x32
+	dAtA[i] = 0x2a
 	{
 		size := m.MaxPercentSend.Size()
 		i -= size
@@ -527,39 +854,32 @@ func (m *UpdateRateLimitProposal) MarshalToSizedBuffer(dAtA []byte) (int, error)
 		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x2a
+	dAtA[i] = 0x22
 	if len(m.ChannelId) > 0 {
 		i -= len(m.ChannelId)
 		copy(dAtA[i:], m.ChannelId)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.ChannelId)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if len(m.Denom) > 0 {
 		i -= len(m.Denom)
 		copy(dAtA[i:], m.Denom)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Denom)))
 		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Description) > 0 {
-		i -= len(m.Description)
-		copy(dAtA[i:], m.Description)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Description)))
-		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Title) > 0 {
-		i -= len(m.Title)
-		copy(dAtA[i:], m.Title)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Title)))
+	if len(m.Authority) > 0 {
+		i -= len(m.Authority)
+		copy(dAtA[i:], m.Authority)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Authority)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *RemoveRateLimitProposal) Marshal() (dAtA []byte, err error) {
+func (m *MsgUpdateRateLimitResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -569,55 +889,20 @@ func (m *RemoveRateLimitProposal) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *RemoveRateLimitProposal) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgUpdateRateLimitResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *RemoveRateLimitProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgUpdateRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Deposit) > 0 {
-		i -= len(m.Deposit)
-		copy(dAtA[i:], m.Deposit)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Deposit)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if len(m.ChannelId) > 0 {
-		i -= len(m.ChannelId)
-		copy(dAtA[i:], m.ChannelId)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ChannelId)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.Denom) > 0 {
-		i -= len(m.Denom)
-		copy(dAtA[i:], m.Denom)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Denom)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Description) > 0 {
-		i -= len(m.Description)
-		copy(dAtA[i:], m.Description)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Description)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Title) > 0 {
-		i -= len(m.Title)
-		copy(dAtA[i:], m.Title)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Title)))
-		i--
-		dAtA[i] = 0xa
-	}
 	return len(dAtA) - i, nil
 }
 
-func (m *ResetRateLimitProposal) Marshal() (dAtA []byte, err error) {
+func (m *MsgRemoveRateLimit) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -627,51 +912,127 @@ func (m *ResetRateLimitProposal) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ResetRateLimitProposal) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRemoveRateLimit) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ResetRateLimitProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRemoveRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Deposit) > 0 {
-		i -= len(m.Deposit)
-		copy(dAtA[i:], m.Deposit)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Deposit)))
-		i--
-		dAtA[i] = 0x2a
-	}
 	if len(m.ChannelId) > 0 {
 		i -= len(m.ChannelId)
 		copy(dAtA[i:], m.ChannelId)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.ChannelId)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if len(m.Denom) > 0 {
 		i -= len(m.Denom)
 		copy(dAtA[i:], m.Denom)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Denom)))
 		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Description) > 0 {
-		i -= len(m.Description)
-		copy(dAtA[i:], m.Description)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Description)))
-		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Title) > 0 {
-		i -= len(m.Title)
-		copy(dAtA[i:], m.Title)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Title)))
+	if len(m.Authority) > 0 {
+		i -= len(m.Authority)
+		copy(dAtA[i:], m.Authority)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Authority)))
 		i--
 		dAtA[i] = 0xa
 	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveRateLimitResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveRateLimitResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgResetRateLimit) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgResetRateLimit) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgResetRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ChannelId) > 0 {
+		i -= len(m.ChannelId)
+		copy(dAtA[i:], m.ChannelId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ChannelId)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Denom)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Authority) > 0 {
+		i -= len(m.Authority)
+		copy(dAtA[i:], m.Authority)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Authority)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgResetRateLimitResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgResetRateLimitResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgResetRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
 	return len(dAtA) - i, nil
 }
 
@@ -686,17 +1047,13 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *AddRateLimitProposal) Size() (n int) {
+func (m *MsgAddRateLimit) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Title)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.Description)
+	l = len(m.Authority)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -715,24 +1072,25 @@ func (m *AddRateLimitProposal) Size() (n int) {
 	if m.DurationHours != 0 {
 		n += 1 + sovTx(uint64(m.DurationHours))
 	}
-	l = len(m.Deposit)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
 	return n
 }
 
-func (m *UpdateRateLimitProposal) Size() (n int) {
+func (m *MsgAddRateLimitResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Title)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgUpdateRateLimit) Size() (n int) {
+	if m == nil {
+		return 0
 	}
-	l = len(m.Description)
+	var l int
+	_ = l
+	l = len(m.Authority)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -751,24 +1109,25 @@ func (m *UpdateRateLimitProposal) Size() (n int) {
 	if m.DurationHours != 0 {
 		n += 1 + sovTx(uint64(m.DurationHours))
 	}
-	l = len(m.Deposit)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
 	return n
 }
 
-func (m *RemoveRateLimitProposal) Size() (n int) {
+func (m *MsgUpdateRateLimitResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Title)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgRemoveRateLimit) Size() (n int) {
+	if m == nil {
+		return 0
 	}
-	l = len(m.Description)
+	var l int
+	_ = l
+	l = len(m.Authority)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -780,24 +1139,25 @@ func (m *RemoveRateLimitProposal) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.Deposit)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
 	return n
 }
 
-func (m *ResetRateLimitProposal) Size() (n int) {
+func (m *MsgRemoveRateLimitResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Title)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgResetRateLimit) Size() (n int) {
+	if m == nil {
+		return 0
 	}
-	l = len(m.Description)
+	var l int
+	_ = l
+	l = len(m.Authority)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -809,10 +1169,15 @@ func (m *ResetRateLimitProposal) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.Deposit)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgResetRateLimitResponse) Size() (n int) {
+	if m == nil {
+		return 0
 	}
+	var l int
+	_ = l
 	return n
 }
 
@@ -822,7 +1187,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *AddRateLimitProposal) Unmarshal(dAtA []byte) error {
+func (m *MsgAddRateLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -845,15 +1210,15 @@ func (m *AddRateLimitProposal) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: AddRateLimitProposal: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAddRateLimit: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AddRateLimitProposal: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAddRateLimit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Title", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -881,41 +1246,9 @@ func (m *AddRateLimitProposal) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Title = string(dAtA[iNdEx:postIndex])
+			m.Authority = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Description = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
@@ -947,7 +1280,7 @@ func (m *AddRateLimitProposal) Unmarshal(dAtA []byte) error {
 			}
 			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ChannelId", wireType)
 			}
@@ -979,7 +1312,7 @@ func (m *AddRateLimitProposal) Unmarshal(dAtA []byte) error {
 			}
 			m.ChannelId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentSend", wireType)
 			}
@@ -1013,7 +1346,7 @@ func (m *AddRateLimitProposal) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentRecv", wireType)
 			}
@@ -1047,7 +1380,7 @@ func (m *AddRateLimitProposal) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DurationHours", wireType)
 			}
@@ -1066,38 +1399,6 @@ func (m *AddRateLimitProposal) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Deposit", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Deposit = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
@@ -1119,7 +1420,7 @@ func (m *AddRateLimitProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *UpdateRateLimitProposal) Unmarshal(dAtA []byte) error {
+func (m *MsgAddRateLimitResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1142,15 +1443,65 @@ func (m *UpdateRateLimitProposal) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: UpdateRateLimitProposal: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAddRateLimitResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: UpdateRateLimitProposal: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAddRateLimitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateRateLimit) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateRateLimit: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateRateLimit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Title", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1178,41 +1529,9 @@ func (m *UpdateRateLimitProposal) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Title = string(dAtA[iNdEx:postIndex])
+			m.Authority = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Description = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
@@ -1244,7 +1563,7 @@ func (m *UpdateRateLimitProposal) Unmarshal(dAtA []byte) error {
 			}
 			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ChannelId", wireType)
 			}
@@ -1276,7 +1595,7 @@ func (m *UpdateRateLimitProposal) Unmarshal(dAtA []byte) error {
 			}
 			m.ChannelId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentSend", wireType)
 			}
@@ -1310,7 +1629,7 @@ func (m *UpdateRateLimitProposal) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentRecv", wireType)
 			}
@@ -1344,7 +1663,7 @@ func (m *UpdateRateLimitProposal) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DurationHours", wireType)
 			}
@@ -1363,38 +1682,6 @@ func (m *UpdateRateLimitProposal) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Deposit", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Deposit = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
@@ -1416,7 +1703,7 @@ func (m *UpdateRateLimitProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *RemoveRateLimitProposal) Unmarshal(dAtA []byte) error {
+func (m *MsgUpdateRateLimitResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1439,15 +1726,65 @@ func (m *RemoveRateLimitProposal) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: RemoveRateLimitProposal: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgUpdateRateLimitResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RemoveRateLimitProposal: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgUpdateRateLimitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveRateLimit) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveRateLimit: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveRateLimit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Title", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1475,41 +1812,9 @@ func (m *RemoveRateLimitProposal) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Title = string(dAtA[iNdEx:postIndex])
+			m.Authority = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Description = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
@@ -1541,7 +1846,7 @@ func (m *RemoveRateLimitProposal) Unmarshal(dAtA []byte) error {
 			}
 			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ChannelId", wireType)
 			}
@@ -1573,38 +1878,6 @@ func (m *RemoveRateLimitProposal) Unmarshal(dAtA []byte) error {
 			}
 			m.ChannelId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Deposit", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Deposit = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
@@ -1626,7 +1899,7 @@ func (m *RemoveRateLimitProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ResetRateLimitProposal) Unmarshal(dAtA []byte) error {
+func (m *MsgRemoveRateLimitResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1649,15 +1922,65 @@ func (m *ResetRateLimitProposal) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ResetRateLimitProposal: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRemoveRateLimitResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ResetRateLimitProposal: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRemoveRateLimitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgResetRateLimit) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgResetRateLimit: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgResetRateLimit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Title", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1685,41 +2008,9 @@ func (m *ResetRateLimitProposal) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Title = string(dAtA[iNdEx:postIndex])
+			m.Authority = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Description = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
@@ -1751,7 +2042,7 @@ func (m *ResetRateLimitProposal) Unmarshal(dAtA []byte) error {
 			}
 			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ChannelId", wireType)
 			}
@@ -1783,38 +2074,56 @@ func (m *ResetRateLimitProposal) Unmarshal(dAtA []byte) error {
 			}
 			m.ChannelId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Deposit", wireType)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
 			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthTx
 			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Deposit = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgResetRateLimitResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgResetRateLimitResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgResetRateLimitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

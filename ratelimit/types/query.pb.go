@@ -29,6 +29,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Queries all rate limits
 type QueryAllRateLimitsRequest struct {
 }
 
@@ -109,6 +110,7 @@ func (m *QueryAllRateLimitsResponse) GetRateLimits() []RateLimit {
 	return nil
 }
 
+// Queries a specific rate limit by channel ID and denom
 type QueryRateLimitRequest struct {
 	Denom     string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
 	ChannelId string `protobuf:"bytes,2,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
@@ -205,6 +207,7 @@ func (m *QueryRateLimitResponse) GetRateLimit() *RateLimit {
 	return nil
 }
 
+// Queries all the rate limits for a given chain
 type QueryRateLimitsByChainIdRequest struct {
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 }
@@ -293,6 +296,7 @@ func (m *QueryRateLimitsByChainIdResponse) GetRateLimits() []RateLimit {
 	return nil
 }
 
+// Queries all the rate limits for a given channel ID
 type QueryRateLimitsByChannelIdRequest struct {
 	ChannelId string `protobuf:"bytes,1,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
 }
@@ -381,6 +385,7 @@ func (m *QueryRateLimitsByChannelIdResponse) GetRateLimits() []RateLimit {
 	return nil
 }
 
+// Queries all blacklisted denoms
 type QueryAllBlacklistedDenomsRequest struct {
 }
 
@@ -461,6 +466,7 @@ func (m *QueryAllBlacklistedDenomsResponse) GetDenoms() []string {
 	return nil
 }
 
+// Queries all whitelisted address pairs
 type QueryAllWhitelistedAddressesRequest struct {
 }
 
@@ -618,11 +624,19 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
+	// Queries all rate limits
 	AllRateLimits(ctx context.Context, in *QueryAllRateLimitsRequest, opts ...grpc.CallOption) (*QueryAllRateLimitsResponse, error)
+	// Queries a specific rate limit by channel ID and denom
+	// Ex:
+	//  - /ratelimit/{channel_id}/by_denom?denom={denom}
 	RateLimit(ctx context.Context, in *QueryRateLimitRequest, opts ...grpc.CallOption) (*QueryRateLimitResponse, error)
+	// Queries all the rate limits for a given chain
 	RateLimitsByChainId(ctx context.Context, in *QueryRateLimitsByChainIdRequest, opts ...grpc.CallOption) (*QueryRateLimitsByChainIdResponse, error)
+	// Queries all the rate limits for a given channel ID
 	RateLimitsByChannelId(ctx context.Context, in *QueryRateLimitsByChannelIdRequest, opts ...grpc.CallOption) (*QueryRateLimitsByChannelIdResponse, error)
+	// Queries all blacklisted denoms
 	AllBlacklistedDenoms(ctx context.Context, in *QueryAllBlacklistedDenomsRequest, opts ...grpc.CallOption) (*QueryAllBlacklistedDenomsResponse, error)
+	// Queries all whitelisted address pairs
 	AllWhitelistedAddresses(ctx context.Context, in *QueryAllWhitelistedAddressesRequest, opts ...grpc.CallOption) (*QueryAllWhitelistedAddressesResponse, error)
 }
 
@@ -690,11 +704,19 @@ func (c *queryClient) AllWhitelistedAddresses(ctx context.Context, in *QueryAllW
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
+	// Queries all rate limits
 	AllRateLimits(context.Context, *QueryAllRateLimitsRequest) (*QueryAllRateLimitsResponse, error)
+	// Queries a specific rate limit by channel ID and denom
+	// Ex:
+	//  - /ratelimit/{channel_id}/by_denom?denom={denom}
 	RateLimit(context.Context, *QueryRateLimitRequest) (*QueryRateLimitResponse, error)
+	// Queries all the rate limits for a given chain
 	RateLimitsByChainId(context.Context, *QueryRateLimitsByChainIdRequest) (*QueryRateLimitsByChainIdResponse, error)
+	// Queries all the rate limits for a given channel ID
 	RateLimitsByChannelId(context.Context, *QueryRateLimitsByChannelIdRequest) (*QueryRateLimitsByChannelIdResponse, error)
+	// Queries all blacklisted denoms
 	AllBlacklistedDenoms(context.Context, *QueryAllBlacklistedDenomsRequest) (*QueryAllBlacklistedDenomsResponse, error)
+	// Queries all whitelisted address pairs
 	AllWhitelistedAddresses(context.Context, *QueryAllWhitelistedAddressesRequest) (*QueryAllWhitelistedAddressesResponse, error)
 }
 

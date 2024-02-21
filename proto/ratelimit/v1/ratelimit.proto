@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types";
 
-// PacketDirection defines whether the transfer packet is being sent from 
+// PacketDirection defines whether the transfer packet is being sent from
 // this chain or is being received on this chain
 enum PacketDirection {
   option (gogoproto.goproto_enum_prefix) = false;
@@ -22,21 +22,21 @@ message Path {
   string channel_id = 2;
 }
 
-// Quota defines the rate limit thresholds for transfer packets 
+// Quota defines the rate limit thresholds for transfer packets
 message Quota {
-  // MaxPercentSend defines the threshold for outflows 
+  // MaxPercentSend defines the threshold for outflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_send = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // MaxPercentSend defines the threshold for inflows 
+  // MaxPercentSend defines the threshold for inflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_recv = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // DurationHours specifies the number of hours before the rate limit 
+  // DurationHours specifies the number of hours before the rate limit
   // is reset (e.g. 24 indicates that the rate limit is reset each day)
   uint64 duration_hours = 3;
 }
@@ -54,8 +54,8 @@ message Flow {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // ChannelValue stores the total supply of the denom at the start of 
-  // the rate limit. This is used as the denominator when checking 
+  // ChannelValue stores the total supply of the denom at the start of
+  // the rate limit. This is used as the denominator when checking
   // the rate limit threshold
   // The ChannelValue is fixed for the duration of the rate limit window
   string channel_value = 3 [
@@ -65,7 +65,7 @@ message Flow {
 }
 
 // RateLimit stores all the context about a given rate limit, including
-// the relevant denom and channel, rate limit thresholds, and current 
+// the relevant denom and channel, rate limit thresholds, and current
 // progress towards the limits
 message RateLimit {
   Path path = 1;
