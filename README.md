@@ -10,7 +10,7 @@ Each rate limit will also have a configurable threshold that dictates the max in
 
 The _net_ inflow and outflow is used (rather than the total inflow/outflow) to prevent DOS attacks where someone repeatedly sends the same token back and forth across the same channel, causing the rate limit to be reached.
 
-The module is implemented as IBC Middleware around the transfer module. The epoch's module is leveraged to determine when each rate limit window has expired (each window is denominated in hours). This means all rate limit windows with the same window duration will start and end at the same time.
+The module is implemented as IBC Middleware around the transfer module. An "hour epoch" abstraction is leveraged to determine when each rate limit window has expired (each window is denominated in hours). This means all rate limit windows with the same window duration will start and end at the same time. In the case of a 24 hour rate limit window, the rate limit will reset at the end of the day in UTC (i.e. 00:00 UTC).
 
 ## Integration
 To add the rate limit module, wire it up in `app.go` in line with the following example. The module must be included in a middleware stack alongside the transfer module.
