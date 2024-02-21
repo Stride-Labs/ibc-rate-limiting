@@ -2,7 +2,7 @@
 
 ## Overview
 
-This `ratelimit` module is a native golang implementation, inspired by Osmosis's CosmWasm [`ibc-rate-limit`](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit) module. The module is meant as a safety control in the event of a bug, attack, or economic failure of an external zone. It prevents massive inflows or outflows of IBC tokens to/from Stride in a short time frame. See [here](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit#motivation) for an excellent summary by the Osmosis team on the motivation for rate limiting.
+This `ratelimit` module is a native golang implementation, inspired by Osmosis's CosmWasm [`ibc-rate-limit`](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit) module. The module is meant as a safety control in the event of a bug, attack, or economic failure of an external zone. It prevents massive inflows or outflows of IBC tokens in a short time frame. See [here](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit#motivation) for an excellent summary by the Osmosis team on the motivation for rate limiting.
 
 Each rate limit is applied at a ChannelID + Denom granularity and is evaluated in evenly spaced fixed windows. For instance, a rate limit might be specified on `uosmo` (denominated as `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` on Stride), on the Stride <-> Osmosis transfer channel (`channel-5`), with a 24 hour window.
 
@@ -120,7 +120,7 @@ Each rate limit is defined by the following three components:
 
 ## Example Walk-Through
 
-Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` ("`ibc/uosmo`"), `channel-5`, with a 10% send and receive threshold.
+Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` ("`ibc/uosmo`"), `channel-5`, on Stride, with a 10% send and receive threshold.
 
 1. At the start of the window, the supply will be queried, to determine the channel value. Let's say the total supply was 100
 2. If someone transferred `8uosmo` from `Osmosis -> Stride`, the `Inflow` would increment by 8
@@ -145,17 +145,17 @@ The module also contains a blacklist to completely halt all IBC transfers for a 
 
 ## Address Whitelist
 
-There is also a whitelist to exclude module account's and ICAs. Stride periodically bundles liquid staking deposits and transfers in a single transaction at the top of the epoch. Without a whitelist, this transfer would make the rate limit more likely to trigger a false positive. 
+There is also a whitelist, mainly used to exclude protocol-owned accounts. For instance, Stride periodically bundles liquid staking deposits and transfers in a single transaction at the top of the epoch. Without a whitelist, this transfer would make the rate limit more likely to trigger a false positive. 
 
 ## Denoms
 
-We always want to refer to the channel ID and denom as they appear on Stride. For instance, in the example above, we would store the rate limit with denom `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` and `channel-5`, instead of `uosmo` and `channel-326` (the ChannelID on Osmosis).
+We always want to refer to the channel ID and denom as they appear on the rate limited chain. For instance, in the example above where rate limiting was added to Stride, we would store the rate limit with denom `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` and `channel-5` (the ChannelID on Stride), instead of `uosmo` and `channel-326` (the ChannelID on Osmosis).
 
 However, since the ratelimit module acts as middleware to the transfer module, the respective denoms need to be interpreted using the denom trace associated with each packet. There are a few scenarios at play here...
 
 ### Send Packets
 
-The denom that the rate limiter will use for a send packet depends on whether it was a native token (e.g. ustrd, stuatom, etc.) or non-native token (e.g. ibc/...)...
+The denom that the rate limiter will use for a send packet depends on whether it was a native token (i.e. tokens minted on the rate limited chain) or non-native token (e.g. ibc/...)...
 
 #### Native vs Non-Native
 
@@ -194,7 +194,7 @@ For a more detailed explanation, see the[ ICS-20 ADR](https://github.com/cosmos/
 
 #### Determining the denom in the rate limit
 
-- If the chain is acting as a **Sink**: Add on the Stride port and channel and hash it
+- If the chain is acting as a **Sink**: Add on the port and channel from the rate limited chain and hash it
 
   - Ex1: `uosmo` sent from Osmosis to Stride
 
@@ -361,22 +361,22 @@ RemoveRateLimit()
 ```go
 // Queries all rate limits
 //   CLI:
-//      strided q ratelimit list-rate-limits
+//      binaryd q ratelimit list-rate-limits
 //   API:
-//      /Stride-Labs/stride/ratelimit/ratelimits
+//      /Stride-Labs/ibc-rate-limiting/ratelimit/ratelimits
 QueryRateLimits()
 
 // Queries a specific rate limit given a ChannelID and Denom
 //   CLI:
-//      strided q ratelimit rate-limit [denom] [channel-id]
+//      binaryd q ratelimit rate-limit [denom] [channel-id]
 //   API:
-//      /Stride-Labs/stride/ratelimit/ratelimit/{denom}/{channel_id}
+//      /Stride-Labs/ibc-rate-limiting/ratelimit/ratelimit/{denom}/{channel_id}
 QueryRateLimit(denom string, channelId string)
 
 // Queries all rate limits associated with a given host chain
 //   CLI:
-//      strided q ratelimit rate-limits-by-chain [chain-id]
+//      binaryd q ratelimit rate-limits-by-chain [chain-id]
 //   API:
-//      /Stride-Labs/stride/ratelimit/ratelimits/{chain_id}
+//      /Stride-Labs/ibc-rate-limiting/ratelimit/ratelimits/{chain_id}
 QueryRateLimitsByChainId(chainId string)
 ```
