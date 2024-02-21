@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/client"
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 
@@ -145,10 +144,6 @@ var (
 				upgradeclient.LegacyCancelProposalHandler,
 				ibcclientclient.UpdateClientProposalHandler,
 				ibcclientclient.UpgradeProposalHandler,
-				ratelimitclient.AddRateLimitProposalHandler,
-				ratelimitclient.UpdateRateLimitProposalHandler,
-				ratelimitclient.RemoveRateLimitProposalHandler,
-				ratelimitclient.ResetRateLimitProposalHandler,
 			},
 		),
 		groupmodule.AppModuleBasic{},
@@ -450,6 +445,7 @@ func NewSimApp(
 		appCodec,
 		keys[ratelimittypes.StoreKey],
 		app.GetSubspace(ratelimittypes.ModuleName),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
