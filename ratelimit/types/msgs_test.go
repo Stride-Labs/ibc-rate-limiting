@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
@@ -17,6 +19,7 @@ import (
 func TestMsgAddRateLimit(t *testing.T) {
 	apptesting.SetupConfig()
 
+	validAuthority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	validDenom := "denom"
 	validChannelId := "channel-0"
 	validMaxPercentSend := sdkmath.NewInt(10)
@@ -31,6 +34,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 		{
 			name: "successful proposal",
 			msg: types.MsgAddRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -39,8 +43,21 @@ func TestMsgAddRateLimit(t *testing.T) {
 			},
 		},
 		{
+			name: "invalid authority",
+			msg: types.MsgAddRateLimit{
+				Authority:      "invalid_address",
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
+				MaxPercentSend: validMaxPercentSend,
+				MaxPercentRecv: validMaxPercentRecv,
+				DurationHours:  validDurationHours,
+			},
+			err: "invalid authority",
+		},
+		{
 			name: "invalid denom",
 			msg: types.MsgAddRateLimit{
+				Authority:      validAuthority,
 				Denom:          "",
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -52,6 +69,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 		{
 			name: "invalid channel-id",
 			msg: types.MsgAddRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      "channel-",
 				MaxPercentSend: validMaxPercentSend,
@@ -63,6 +81,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 		{
 			name: "invalid send percent (lt 0)",
 			msg: types.MsgAddRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: sdkmath.NewInt(-1),
@@ -74,6 +93,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 		{
 			name: "invalid send percent (gt 100)",
 			msg: types.MsgAddRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: sdkmath.NewInt(101),
@@ -85,6 +105,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 		{
 			name: "invalid receive percent (lt 0)",
 			msg: types.MsgAddRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -96,6 +117,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 		{
 			name: "invalid receive percent (gt 100)",
 			msg: types.MsgAddRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -107,6 +129,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 		{
 			name: "invalid send and receive percent",
 			msg: types.MsgAddRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: sdkmath.ZeroInt(),
@@ -118,6 +141,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 		{
 			name: "invalid duration",
 			msg: types.MsgAddRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -154,6 +178,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 func TestMsgUpdateRateLimit(t *testing.T) {
 	apptesting.SetupConfig()
 
+	validAuthority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	validDenom := "denom"
 	validChannelId := "channel-0"
 	validMaxPercentSend := sdkmath.NewInt(10)
@@ -168,6 +193,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		{
 			name: "successful proposal",
 			msg: types.MsgUpdateRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -176,8 +202,21 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			},
 		},
 		{
+			name: "invalid authority",
+			msg: types.MsgUpdateRateLimit{
+				Authority:      "invalid_address",
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
+				MaxPercentSend: validMaxPercentSend,
+				MaxPercentRecv: validMaxPercentRecv,
+				DurationHours:  validDurationHours,
+			},
+			err: "invalid authority",
+		},
+		{
 			name: "invalid denom",
 			msg: types.MsgUpdateRateLimit{
+				Authority:      validAuthority,
 				Denom:          "",
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -189,6 +228,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		{
 			name: "invalid channel-id",
 			msg: types.MsgUpdateRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      "channel-",
 				MaxPercentSend: validMaxPercentSend,
@@ -200,6 +240,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		{
 			name: "invalid send percent (lt 0)",
 			msg: types.MsgUpdateRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: sdkmath.NewInt(-1),
@@ -211,6 +252,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		{
 			name: "invalid send percent (gt 100)",
 			msg: types.MsgUpdateRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: sdkmath.NewInt(101),
@@ -222,6 +264,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		{
 			name: "invalid receive percent (lt 0)",
 			msg: types.MsgUpdateRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -233,6 +276,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		{
 			name: "invalid receive percent (gt 100)",
 			msg: types.MsgUpdateRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -244,6 +288,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		{
 			name: "invalid send and receive percent",
 			msg: types.MsgUpdateRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: sdkmath.ZeroInt(),
@@ -255,6 +300,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		{
 			name: "invalid duration",
 			msg: types.MsgUpdateRateLimit{
+				Authority:      validAuthority,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -291,6 +337,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 func TestMsgRemoveRateLimit(t *testing.T) {
 	apptesting.SetupConfig()
 
+	validAuthority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	validDenom := "denom"
 	validChannelId := "channel-0"
 
@@ -302,13 +349,24 @@ func TestMsgRemoveRateLimit(t *testing.T) {
 		{
 			name: "successful message",
 			msg: types.MsgRemoveRateLimit{
+				Authority: validAuthority,
 				Denom:     validDenom,
 				ChannelId: validChannelId,
 			},
 		},
 		{
+			name: "invalid authority",
+			msg: types.MsgRemoveRateLimit{
+				Authority: "invalid_address",
+				Denom:     validDenom,
+				ChannelId: validChannelId,
+			},
+			err: "invalid authority",
+		},
+		{
 			name: "invalid denom",
 			msg: types.MsgRemoveRateLimit{
+				Authority: validAuthority,
 				Denom:     "",
 				ChannelId: validChannelId,
 			},
@@ -317,6 +375,7 @@ func TestMsgRemoveRateLimit(t *testing.T) {
 		{
 			name: "invalid channel-id",
 			msg: types.MsgRemoveRateLimit{
+				Authority: validAuthority,
 				Denom:     validDenom,
 				ChannelId: "chan-1",
 			},
@@ -347,6 +406,7 @@ func TestMsgRemoveRateLimit(t *testing.T) {
 func TestMsgResetRateLimit(t *testing.T) {
 	apptesting.SetupConfig()
 
+	validAuthority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	validDenom := "denom"
 	validChannelId := "channel-0"
 
@@ -358,13 +418,24 @@ func TestMsgResetRateLimit(t *testing.T) {
 		{
 			name: "successful message",
 			msg: types.MsgResetRateLimit{
+				Authority: validAuthority,
 				Denom:     validDenom,
 				ChannelId: validChannelId,
 			},
 		},
 		{
+			name: "invalid authority",
+			msg: types.MsgResetRateLimit{
+				Authority: "invalid_address",
+				Denom:     validDenom,
+				ChannelId: validChannelId,
+			},
+			err: "invalid authority",
+		},
+		{
 			name: "invalid denom",
 			msg: types.MsgResetRateLimit{
+				Authority: validAuthority,
 				Denom:     "",
 				ChannelId: validChannelId,
 			},
@@ -373,6 +444,7 @@ func TestMsgResetRateLimit(t *testing.T) {
 		{
 			name: "invalid channel-id",
 			msg: types.MsgResetRateLimit{
+				Authority: validAuthority,
 				Denom:     validDenom,
 				ChannelId: "chan-1",
 			},
