@@ -1,19 +1,19 @@
-package ratelimit
+package keeper
 
 import (
-	"strconv"
-	"strings"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
+
+	// Set rate limits, blacklists, and whitelists
 	for _, rateLimit := range genState.RateLimits {
 		k.SetRateLimit(ctx, rateLimit)
 	}
@@ -23,22 +23,31 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, addressPair := range genState.WhitelistedAddressPairs {
 		k.SetWhitelistedAddressPair(ctx, addressPair)
 	}
+
+	// Set pending sequence numbers - validating that they're in right format of {channelId}/{sequenceNumber}
 	for _, pendingPacketId := range genState.PendingSendPacketSequenceNumbers {
-		splits := strings.Split(pendingPacketId, "/")
-		if len(splits) != 2 {
-			panic("Invalid pending send packet, must be of form: {channelId}/{sequenceNumber}")
-		}
-		channelId := splits[0]
-		sequence, err := strconv.ParseUint(splits[1], 10, 64)
+		channelId, sequence, err := types.ParsePendingPacketId(pendingPacketId)
 		if err != nil {
-			panic(err)
+			panic(err.Error())
 		}
 		k.SetPendingSendPacket(ctx, channelId, sequence)
+	}
+
+	// If the hour epoch has been initialized already (epoch number != 0), validate and then use it
+	if genState.HourEpoch.EpochNumber > 0 {
+		k.SetHourEpoch(ctx, genState.HourEpoch)
+	} else {
+		// If the hour epoch has not been initialized yet, set it so that the epoch number matches
+		// the current hour and the start time is precisely on the hour
+		genState.HourEpoch.EpochNumber = uint64(ctx.BlockTime().Hour())
+		genState.HourEpoch.EpochStartTime = ctx.BlockTime().Truncate(time.Hour)
+		genState.HourEpoch.EpochStartHeight = ctx.BlockHeight()
+		k.SetHourEpoch(ctx, genState.HourEpoch)
 	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 
 	genesis.Params = k.GetParams(ctx)
@@ -46,6 +55,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.BlacklistedDenoms = k.GetAllBlacklistedDenoms(ctx)
 	genesis.WhitelistedAddressPairs = k.GetAllWhitelistedAddressPairs(ctx)
 	genesis.PendingSendPacketSequenceNumbers = k.GetAllPendingSendPackets(ctx)
+	genesis.HourEpoch = k.GetHourEpoch(ctx)
 
 	return genesis
 }

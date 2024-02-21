@@ -26,4 +26,9 @@ message GenesisState {
 
   repeated string blacklisted_denoms = 4;
   repeated string pending_send_packet_sequence_numbers = 5;
+
+  HourEpoch hour_epoch = 6 [
+    (gogoproto.moretags) = "yaml:\"hour_epoch\"",
+    (gogoproto.nullable) = false
+  ];
 }

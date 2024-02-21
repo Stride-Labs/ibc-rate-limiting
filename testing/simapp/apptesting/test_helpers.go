@@ -16,11 +16,6 @@ var (
 	TestChainId = "chain-0"
 )
 
-type SuitelessAppTestHelper struct {
-	App *app.SimApp
-	Ctx sdk.Context
-}
-
 type AppTestHelper struct {
 	suite.Suite
 
@@ -41,16 +36,6 @@ func (s *AppTestHelper) Setup() {
 	s.TestAccs = CreateRandomAccounts(3)
 }
 
-// Instantiates an TestHelper without the test suite
-// This is for testing scenarios where we simply need the setup function to run,
-// and need access to the TestHelper attributes and keepers (e.g. genesis tests)
-func SetupSuitelessTestHelper() SuitelessAppTestHelper {
-	s := SuitelessAppTestHelper{}
-	s.App = app.InitTestingApp()
-	s.Ctx = s.App.BaseApp.NewContext(false, tmtypesproto.Header{Height: 1, ChainID: TestChainId})
-	return s
-}
-
 // Generate random account addresss
 func CreateRandomAccounts(numAccts int) []sdk.AccAddress {
 	testAddrs := make([]sdk.AccAddress, numAccts)
@@ -62,6 +47,7 @@ func CreateRandomAccounts(numAccts int) []sdk.AccAddress {
 	return testAddrs
 }
 
+// Helper function to confirm the upgrade block processes without error
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
 	plan := upgradetypes.Plan{

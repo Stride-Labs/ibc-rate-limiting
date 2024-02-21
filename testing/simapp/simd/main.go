@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/testing/simapp"
+	"github.com/Stride-Labs/ibc-rate-limiting/testing/simapp"
 
 	"cosmossdk.io/log"
 
