@@ -4,10 +4,8 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
@@ -30,45 +28,9 @@ func (k msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRateLimi
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
 	}
 
-	// Confirm the channel value is not zero
-	channelValue := k.Keeper.GetChannelValue(ctx, msg.Denom)
-	if channelValue.IsZero() {
-		return nil, types.ErrZeroChannelValue
+	if err := k.Keeper.AddRateLimit(ctx, msg); err != nil {
+		return nil, err
 	}
-
-	// Confirm the rate limit does not already exist
-	_, found := k.Keeper.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
-	if found {
-		return nil, types.ErrRateLimitAlreadyExists
-	}
-
-	// Confirm the channel exists
-	_, found = k.Keeper.channelKeeper.GetChannel(ctx, transfertypes.PortID, msg.ChannelId)
-	if !found {
-		return nil, types.ErrChannelNotFound
-	}
-
-	// Create and store the rate limit object
-	path := types.Path{
-		Denom:     msg.Denom,
-		ChannelId: msg.ChannelId,
-	}
-	quota := types.Quota{
-		MaxPercentSend: msg.MaxPercentSend,
-		MaxPercentRecv: msg.MaxPercentRecv,
-		DurationHours:  msg.DurationHours,
-	}
-	flow := types.Flow{
-		Inflow:       sdkmath.ZeroInt(),
-		Outflow:      sdkmath.ZeroInt(),
-		ChannelValue: channelValue,
-	}
-
-	k.Keeper.SetRateLimit(ctx, types.RateLimit{
-		Path:  &path,
-		Quota: &quota,
-		Flow:  &flow,
-	})
 
 	return &types.MsgAddRateLimitResponse{}, nil
 }
@@ -80,34 +42,9 @@ func (k msgServer) UpdateRateLimit(goCtx context.Context, msg *types.MsgUpdateRa
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
 	}
 
-	// Confirm the rate limit exists
-	_, found := k.Keeper.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
-	if !found {
-		return nil, types.ErrRateLimitNotFound
+	if err := k.Keeper.UpdateRateLimit(ctx, msg); err != nil {
+		return nil, err
 	}
-
-	// Update the rate limit object with the new quota information
-	// The flow should also get reset to 0
-	path := types.Path{
-		Denom:     msg.Denom,
-		ChannelId: msg.ChannelId,
-	}
-	quota := types.Quota{
-		MaxPercentSend: msg.MaxPercentSend,
-		MaxPercentRecv: msg.MaxPercentRecv,
-		DurationHours:  msg.DurationHours,
-	}
-	flow := types.Flow{
-		Inflow:       sdkmath.ZeroInt(),
-		Outflow:      sdkmath.ZeroInt(),
-		ChannelValue: k.GetChannelValue(ctx, msg.Denom),
-	}
-
-	k.Keeper.SetRateLimit(ctx, types.RateLimit{
-		Path:  &path,
-		Quota: &quota,
-		Flow:  &flow,
-	})
 
 	return &types.MsgUpdateRateLimitResponse{}, nil
 }

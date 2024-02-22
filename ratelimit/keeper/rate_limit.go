@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -185,6 +186,85 @@ func (k Keeper) GetAllRateLimits(ctx sdk.Context) []types.RateLimit {
 	}
 
 	return allRateLimits
+}
+
+// Adds a new rate limit. Fails if the rate limit already exists or the channel value is 0
+func (k Keeper) AddRateLimit(ctx sdk.Context, msg *types.MsgAddRateLimit) error {
+	// Confirm the channel value is not zero
+	channelValue := k.GetChannelValue(ctx, msg.Denom)
+	if channelValue.IsZero() {
+		return types.ErrZeroChannelValue
+	}
+
+	// Confirm the rate limit does not already exist
+	_, found := k.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
+	if found {
+		return types.ErrRateLimitAlreadyExists
+	}
+
+	// Confirm the channel exists
+	_, found = k.channelKeeper.GetChannel(ctx, transfertypes.PortID, msg.ChannelId)
+	if !found {
+		return types.ErrChannelNotFound
+	}
+
+	// Create and store the rate limit object
+	path := types.Path{
+		Denom:     msg.Denom,
+		ChannelId: msg.ChannelId,
+	}
+	quota := types.Quota{
+		MaxPercentSend: msg.MaxPercentSend,
+		MaxPercentRecv: msg.MaxPercentRecv,
+		DurationHours:  msg.DurationHours,
+	}
+	flow := types.Flow{
+		Inflow:       sdkmath.ZeroInt(),
+		Outflow:      sdkmath.ZeroInt(),
+		ChannelValue: channelValue,
+	}
+
+	k.SetRateLimit(ctx, types.RateLimit{
+		Path:  &path,
+		Quota: &quota,
+		Flow:  &flow,
+	})
+
+	return nil
+}
+
+// Updates an existing rate limit. Fails if the rate limit doesn't exist
+func (k Keeper) UpdateRateLimit(ctx sdk.Context, msg *types.MsgUpdateRateLimit) error {
+	// Confirm the rate limit exists
+	_, found := k.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
+	if !found {
+		return types.ErrRateLimitNotFound
+	}
+
+	// Update the rate limit object with the new quota information
+	// The flow should also get reset to 0
+	path := types.Path{
+		Denom:     msg.Denom,
+		ChannelId: msg.ChannelId,
+	}
+	quota := types.Quota{
+		MaxPercentSend: msg.MaxPercentSend,
+		MaxPercentRecv: msg.MaxPercentRecv,
+		DurationHours:  msg.DurationHours,
+	}
+	flow := types.Flow{
+		Inflow:       sdkmath.ZeroInt(),
+		Outflow:      sdkmath.ZeroInt(),
+		ChannelValue: k.GetChannelValue(ctx, msg.Denom),
+	}
+
+	k.SetRateLimit(ctx, types.RateLimit{
+		Path:  &path,
+		Quota: &quota,
+		Flow:  &flow,
+	})
+
+	return nil
 }
 
 // Sets the sequence number of a packet that was just sent
