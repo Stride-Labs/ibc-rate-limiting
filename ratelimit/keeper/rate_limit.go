@@ -9,27 +9,6 @@ import (
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
 
-// Reset the rate limit after expiration
-// The inflow and outflow should get reset to 0, the channelValue should be updated,
-// and all pending send packet sequence numbers should be removed
-func (k Keeper) ResetRateLimit(ctx sdk.Context, denom string, channelId string) error {
-	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
-	if !found {
-		return types.ErrRateLimitNotFound
-	}
-
-	flow := types.Flow{
-		Inflow:       sdkmath.ZeroInt(),
-		Outflow:      sdkmath.ZeroInt(),
-		ChannelValue: k.GetChannelValue(ctx, denom),
-	}
-	rateLimit.Flow = &flow
-
-	k.SetRateLimit(ctx, rateLimit)
-	k.RemoveAllChannelPendingSendPackets(ctx, channelId)
-	return nil
-}
-
 // Stores/Updates a rate limit object in the store
 func (k Keeper) SetRateLimit(ctx sdk.Context, rateLimit types.RateLimit) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
@@ -156,5 +135,26 @@ func (k Keeper) UpdateRateLimit(ctx sdk.Context, msg *types.MsgUpdateRateLimit) 
 		Flow:  &flow,
 	})
 
+	return nil
+}
+
+// Reset the rate limit after expiration
+// The inflow and outflow should get reset to 0, the channelValue should be updated,
+// and all pending send packet sequence numbers should be removed
+func (k Keeper) ResetRateLimit(ctx sdk.Context, denom string, channelId string) error {
+	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
+	if !found {
+		return types.ErrRateLimitNotFound
+	}
+
+	flow := types.Flow{
+		Inflow:       sdkmath.ZeroInt(),
+		Outflow:      sdkmath.ZeroInt(),
+		ChannelValue: k.GetChannelValue(ctx, denom),
+	}
+	rateLimit.Flow = &flow
+
+	k.SetRateLimit(ctx, rateLimit)
+	k.RemoveAllChannelPendingSendPackets(ctx, channelId)
 	return nil
 }
