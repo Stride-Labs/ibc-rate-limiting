@@ -18,6 +18,7 @@ type (
 		storeKey   storetypes.StoreKey
 		cdc        codec.BinaryCodec
 		paramstore paramtypes.Subspace
+		authority  string
 
 		bankKeeper    types.BankKeeper
 		channelKeeper types.ChannelKeeper
@@ -29,6 +30,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	key storetypes.StoreKey,
 	ps paramtypes.Subspace,
+	authority string,
 	bankKeeper types.BankKeeper,
 	channelKeeper types.ChannelKeeper,
 	ics4Wrapper types.ICS4Wrapper,
@@ -37,6 +39,7 @@ func NewKeeper(
 		cdc:           cdc,
 		storeKey:      key,
 		paramstore:    ps,
+		authority:     authority,
 		bankKeeper:    bankKeeper,
 		channelKeeper: channelKeeper,
 		ics4Wrapper:   ics4Wrapper,
@@ -45,4 +48,9 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// GetAuthority returns the module's authority.
+func (k Keeper) GetAuthority() string {
+	return k.authority
 }

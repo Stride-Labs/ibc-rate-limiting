@@ -30,6 +30,14 @@ var (
 	PendingSendPacketChannelLength int = 16
 )
 
+// Get the rate limit byte key built from the denom and channelId
+func GetRateLimitItemKey(denom string, channelId string) []byte {
+	return append(KeyPrefix(denom), KeyPrefix(channelId)...)
+}
+
+// Get the pending send packet key from the channel ID and sequence number
+// The channel ID must be fixed length to allow for extracting the underlying
+// values from a key
 func GetPendingSendPacketKey(channelId string, sequenceNumber uint64) []byte {
 	channelIdBz := make([]byte, PendingSendPacketChannelLength)
 	copy(channelIdBz[:], channelId)
@@ -40,6 +48,7 @@ func GetPendingSendPacketKey(channelId string, sequenceNumber uint64) []byte {
 	return append(channelIdBz, sequenceNumberBz...)
 }
 
+// Get the whitelist path key from a sender and receiver address
 func GetAddressWhitelistKey(sender, receiver string) []byte {
 	return append(KeyPrefix(sender), KeyPrefix(receiver)...)
 }

@@ -28,6 +28,8 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// PacketDirection defines whether the transfer packet is being sent from
+// this chain or is being received on this chain
 type PacketDirection int32
 
 const (
@@ -53,6 +55,7 @@ func (PacketDirection) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_a3afe8dd489c3bd2, []int{0}
 }
 
+// Path holds the denom and channelID that define the rate limited route
 type Path struct {
 	Denom     string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
 	ChannelId string `protobuf:"bytes,2,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
@@ -105,10 +108,17 @@ func (m *Path) GetChannelId() string {
 	return ""
 }
 
+// Quota defines the rate limit thresholds for transfer packets
 type Quota struct {
+	// MaxPercentSend defines the threshold for outflows
+	// The threshold is defined as a percentage (e.g. 10 indicates 10%)
 	MaxPercentSend github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=max_percent_send,json=maxPercentSend,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_send"`
+	// MaxPercentSend defines the threshold for inflows
+	// The threshold is defined as a percentage (e.g. 10 indicates 10%)
 	MaxPercentRecv github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=max_percent_recv,json=maxPercentRecv,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_percent_recv"`
-	DurationHours  uint64                                 `protobuf:"varint,3,opt,name=duration_hours,json=durationHours,proto3" json:"duration_hours,omitempty"`
+	// DurationHours specifies the number of hours before the rate limit
+	// is reset (e.g. 24 indicates that the rate limit is reset each day)
+	DurationHours uint64 `protobuf:"varint,3,opt,name=duration_hours,json=durationHours,proto3" json:"duration_hours,omitempty"`
 }
 
 func (m *Quota) Reset()         { *m = Quota{} }
@@ -152,8 +162,16 @@ func (m *Quota) GetDurationHours() uint64 {
 }
 
 type Flow struct {
-	Inflow       github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=inflow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"inflow"`
-	Outflow      github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=outflow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"outflow"`
+	// Inflow defines the total amount of inbound transfers for the given
+	// rate limit in the current window
+	Inflow github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=inflow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"inflow"`
+	// Outflow defines the total amount of outbound transfers for the given
+	// rate limit in the current window
+	Outflow github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=outflow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"outflow"`
+	// ChannelValue stores the total supply of the denom at the start of
+	// the rate limit. This is used as the denominator when checking
+	// the rate limit threshold
+	// The ChannelValue is fixed for the duration of the rate limit window
 	ChannelValue github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=channel_value,json=channelValue,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"channel_value"`
 }
 
@@ -190,6 +208,9 @@ func (m *Flow) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Flow proto.InternalMessageInfo
 
+// RateLimit stores all the context about a given rate limit, including
+// the relevant denom and channel, rate limit thresholds, and current
+// progress towards the limits
 type RateLimit struct {
 	Path  *Path  `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	Quota *Quota `protobuf:"bytes,2,opt,name=quota,proto3" json:"quota,omitempty"`
@@ -250,6 +271,8 @@ func (m *RateLimit) GetFlow() *Flow {
 	return nil
 }
 
+// WhitelistedAddressPair represents a sender-receiver combo that is
+// not subject to rate limit restrictions
 type WhitelistedAddressPair struct {
 	Sender   string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Receiver string `protobuf:"bytes,2,opt,name=receiver,proto3" json:"receiver,omitempty"`
