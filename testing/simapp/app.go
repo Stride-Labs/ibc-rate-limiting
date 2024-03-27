@@ -423,8 +423,13 @@ func NewSimApp(
 	govConfig.MaxMetadataLen = 10_000
 
 	govKeeper := govkeeper.NewKeeper(
-		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
-		app.StakingKeeper, app.MsgServiceRouter(), govConfig, authority,
+		appCodec, keys[govtypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		app.MsgServiceRouter(),
+		govConfig,
+		authority,
 	)
 
 	// Set legacy router for backwards compatibility with gov v1beta1
