@@ -208,6 +208,7 @@ replace (
 
 	// https://github.com/Reecepbcups/cosmos-sdk/commits/reece/fix-prometheus-version/
 	// github.com/cosmos/cosmos-sdk => /home/reece/Desktop/Programming/Go/cosmos-sdk
+	// go list -m github.com/reecepbcups/cosmos-sdk@47a6e31679b5cfc76c28074ae4ef8a115d6d43f4
 	github.com/cosmos/cosmos-sdk => github.com/reecepbcups/cosmos-sdk v0.50.3-0.20240326194427-f2af88f8b783
 
 	// fork cast to add additional error checking
