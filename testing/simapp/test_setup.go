@@ -2,7 +2,6 @@ package simapp
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -74,13 +73,8 @@ func InitTestingApp() *SimApp {
 		panic(err)
 	}
 
-	// panic priunt stateBytes
-	fmt.Println(string(stateBytes))
-	panic(1)
-
 	app.InitChain(
 		&abci.RequestInitChain{
-			Validators:      []abci.ValidatorUpdate{},
 			ConsensusParams: simtestutil.DefaultConsensusParams,
 			AppStateBytes:   stateBytes,
 		},
@@ -117,8 +111,15 @@ func GenesisStateWithValSet(app *SimApp) GenesisState {
 	for _, val := range valSet.Validators {
 		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
 		pkAny, _ := codectypes.NewAnyWithValue(pk)
+
+		// val.Address to bech32 wallet prefix
+		valAddr, err := sdk.ValAddressFromHex(val.Address.String())
+		if err != nil {
+			panic(err)
+		}
+
 		validator := stakingtypes.Validator{
-			OperatorAddress:   sdk.ValAddress(val.Address).String(),
+			OperatorAddress:   valAddr.String(),
 			ConsensusPubkey:   pkAny,
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
@@ -130,8 +131,9 @@ func GenesisStateWithValSet(app *SimApp) GenesisState {
 			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec()),
 			MinSelfDelegation: sdkmath.ZeroInt(),
 		}
+
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress().String(), val.Address.String(), sdkmath.LegacyOneDec()))
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress().String(), valAddr.String(), sdkmath.LegacyOneDec()))
 	}
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
