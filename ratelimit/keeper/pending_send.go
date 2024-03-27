@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
 
@@ -63,7 +64,7 @@ func (k Keeper) GetAllPendingSendPackets(ctx sdk.Context) []string {
 func (k Keeper) RemoveAllChannelPendingSendPackets(ctx sdk.Context, channelId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
 
-	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefix(channelId))
+	iterator := storetypes.KVStorePrefixIterator(store, types.KeyPrefix(channelId))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {

@@ -35,13 +35,13 @@ message MsgAddRateLimit {
   // MaxPercentSend defines the threshold for outflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_send = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // MaxPercentSend defines the threshold for inflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_recv = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // DurationHours specifies the number of hours before the rate limit
@@ -65,13 +65,13 @@ message MsgUpdateRateLimit {
   // MaxPercentSend defines the threshold for outflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_send = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // MaxPercentSend defines the threshold for inflows
   // The threshold is defined as a percentage (e.g. 10 indicates 10%)
   string max_percent_recv = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // DurationHours specifies the number of hours before the rate limit
