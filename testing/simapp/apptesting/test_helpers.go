@@ -1,12 +1,10 @@
 package apptesting
 
 import (
-	abci "github.com/cometbft/cometbft/abci/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
-	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/stretchr/testify/suite"
 
 	app "github.com/Stride-Labs/ibc-rate-limiting/testing/simapp"
@@ -28,7 +26,7 @@ type AppTestHelper struct {
 // AppTestHelper Constructor
 func (s *AppTestHelper) Setup() {
 	s.App = app.InitTestingApp()
-	s.Ctx = s.App.BaseApp.NewContext(false, tmtypesproto.Header{Height: 1, ChainID: TestChainId})
+	s.Ctx = s.App.BaseApp.NewContext(false)
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
@@ -57,13 +55,12 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 
 	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
 	s.Require().NoError(err)
-	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
-	s.Require().True(exists)
+	_, err = s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
+	s.Require().NoError(err)
 
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
 	s.Require().NotPanics(func() {
-		beginBlockRequest := abci.RequestBeginBlock{}
-		s.App.BeginBlocker(s.Ctx, beginBlockRequest)
+		s.App.BeginBlocker(s.Ctx)
 	})
 }
 
